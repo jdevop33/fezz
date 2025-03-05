@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
     "@headlessui/react": "^1.7.18",
     "@supabase/supabase-js": "^2.39.7",
     "clsx": "^2.1.0",
