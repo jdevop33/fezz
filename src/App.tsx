@@ -1,16 +1,7 @@
-import React, { lazy } from 'react';
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import React, { lazy, Suspense } from 'react';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './components/ThemeProvider';
-
-// Lazy load pages for better performance
-const LandingPage = lazy(() => import('./pages/LandingPage'));
-const SignupPage = lazy(() => import('./pages/SignupPage'));
-const DashboardPage = lazy(() => import('./pages/DashboardPage'));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-const ProductManagement = lazy(() => import('./pages/admin/ProductManagement'));
-const CategoryManagement = lazy(() => import('./pages/admin/CategoryManagement'));
-const PendingApprovals = lazy(() => import('./pages/admin/PendingApprovals'));
 
 // Loading fallback
 const PageLoader = () => (
@@ -18,6 +9,25 @@ const PageLoader = () => (
     <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
   </div>
 );
+
+// Wrap lazy components with Suspense
+const lazyWithSuspense = (importFn: () => Promise<any>) => {
+  const LazyComponent = lazy(importFn);
+  return (props: any) => (
+    <Suspense fallback={<PageLoader />}>
+      <LazyComponent {...props} />
+    </Suspense>
+  );
+};
+
+// Lazy load pages for better performance
+const LandingPage = lazyWithSuspense(() => import('./pages/LandingPage'));
+const SignupPage = lazyWithSuspense(() => import('./pages/SignupPage'));
+const DashboardPage = lazyWithSuspense(() => import('./pages/DashboardPage'));
+const AdminDashboard = lazyWithSuspense(() => import('./pages/AdminDashboard'));
+const ProductManagement = lazyWithSuspense(() => import('./pages/admin/ProductManagement'));
+const CategoryManagement = lazyWithSuspense(() => import('./pages/admin/CategoryManagement'));
+const PendingApprovals = lazyWithSuspense(() => import('./pages/admin/PendingApprovals'));
 
 // Auth check helper function
 const requireAuth = (element: React.ReactNode) => {
@@ -47,57 +57,47 @@ const requireAdmin = (element: React.ReactNode) => {
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <LandingPage />,
-    HydrateFallback: PageLoader,
+    element: <LandingPage />
   },
   {
     path: "/signup",
-    element: <SignupPage />,
-    HydrateFallback: PageLoader,
+    element: <SignupPage />
   },
   {
     path: "/dashboard",
-    element: requireAuth(<DashboardPage />),
-    HydrateFallback: PageLoader,
+    element: requireAuth(<DashboardPage />)
   },
   {
     path: "/admin",
     element: requireAdmin(<AdminDashboard />),
-    HydrateFallback: PageLoader,
     children: [
       {
         index: true,
-        element: <Navigate to="/admin/products" replace />,
+        element: <Navigate to="/admin/products" replace />
       },
       {
         path: "products",
-        element: <ProductManagement />,
-        HydrateFallback: PageLoader,
+        element: <ProductManagement />
       },
       {
         path: "categories",
-        element: <CategoryManagement />,
-        HydrateFallback: PageLoader,
+        element: <CategoryManagement />
       },
       {
         path: "approvals",
-        element: <PendingApprovals />,
-        HydrateFallback: PageLoader,
+        element: <PendingApprovals />
       }
     ]
   },
   {
     path: "*",
-    element: <Navigate to="/" replace />,
+    element: <Navigate to="/" replace />
   }
 ], {
   future: {
     v7_relativeSplatPath: true,
     v7_startTransition: true,
-    v7_normalizeFormMethod: true,
-    v7_partialHydration: true,
-    v7_skipActionErrorRevalidation: true,
-    v7_fetcherPersist: true,
+    v7_normalizeFormMethod: true
   },
 });
 
