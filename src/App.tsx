@@ -1,7 +1,8 @@
-import React, { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
+import React, { lazy, Suspense, useEffect } from 'react';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './components/ThemeProvider';
+import { AuthProvider, useAuth } from './lib/AuthContext';
 
 // Loading fallback
 const PageLoader = () => (
@@ -28,29 +29,33 @@ const AdminDashboard = lazyWithSuspense(() => import('./pages/AdminDashboard'));
 const ProductManagement = lazyWithSuspense(() => import('./pages/admin/ProductManagement'));
 const CategoryManagement = lazyWithSuspense(() => import('./pages/admin/CategoryManagement'));
 const PendingApprovals = lazyWithSuspense(() => import('./pages/admin/PendingApprovals'));
+// Add a login page
+const LoginPage = lazyWithSuspense(() => import('./pages/LoginPage'));
 
-// Auth check helper function
-const requireAuth = (element: React.ReactNode) => {
-  // This would normally check authentication state
-  const isAuthenticated = true; // Replace with actual auth check
+// Protected route wrapper component
+const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) => {
+  const { currentUser, loading } = useAuth();
   
-  if (!isAuthenticated) {
+  if (loading) {
+    return <PageLoader />;
+  }
+  
+  if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
   
-  return element;
-};
-
-// Admin auth check helper function
-const requireAdmin = (element: React.ReactNode) => {
-  // This would normally check admin permissions
-  const isAdmin = true; // Replace with actual admin check
-  
-  if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+  // Check for admin role if required
+  if (requireAdmin) {
+    // This would check a custom claim or a field in the user's Firestore document
+    // For demo purposes, we're just checking if the email contains "admin"
+    const isAdmin = currentUser.email?.includes('admin');
+    
+    if (!isAdmin) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
   
-  return element;
+  return <>{children}</>;
 };
 
 // Create router with future flags enabled
@@ -60,16 +65,20 @@ const router = createBrowserRouter([
     element: <LandingPage />
   },
   {
+    path: "/login",
+    element: <LoginPage />
+  },
+  {
     path: "/signup",
     element: <SignupPage />
   },
   {
     path: "/dashboard",
-    element: requireAuth(<DashboardPage />)
+    element: <ProtectedRoute><DashboardPage /></ProtectedRoute>
   },
   {
     path: "/admin",
-    element: requireAdmin(<AdminDashboard />),
+    element: <ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>,
     children: [
       {
         index: true,
@@ -104,21 +113,23 @@ const router = createBrowserRouter([
 function App() {
   return (
     <ThemeProvider defaultTheme="system">
-      <Toaster 
-        position="top-right" 
-        closeButton 
-        theme="system"
-        className="toaster-wrapper"
-        toastOptions={{
-          classNames: {
-            toast: "group toast group-[.toaster]:bg-white group-[.toaster]:text-surface-900 group-[.toaster]:border-surface-200 group-[.toaster]:shadow-soft-xl dark:group-[.toaster]:bg-surface-800 dark:group-[.toaster]:text-surface-50 dark:group-[.toaster]:border-surface-700",
-            title: "text-surface-900 dark:text-white text-sm font-medium",
-            description: "text-surface-600 dark:text-surface-300 text-sm",
-            success: "text-success-500"
-          }
-        }}
-      />
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <Toaster 
+          position="top-right" 
+          closeButton 
+          theme="system"
+          className="toaster-wrapper"
+          toastOptions={{
+            classNames: {
+              toast: "group toast group-[.toaster]:bg-white group-[.toaster]:text-surface-900 group-[.toaster]:border-surface-200 group-[.toaster]:shadow-soft-xl dark:group-[.toaster]:bg-surface-800 dark:group-[.toaster]:text-surface-50 dark:group-[.toaster]:border-surface-700",
+              title: "text-surface-900 dark:text-white text-sm font-medium",
+              description: "text-surface-600 dark:text-surface-300 text-sm",
+              success: "text-success-500"
+            }
+          }}
+        />
+        <RouterProvider router={router} />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

@@ -35,10 +35,13 @@
 - Accessibility: WCAG AA compliance with proper contrast ratios
 - Customized scrollbars for improved UX
 
-## Supabase
-- Database migrations in supabase/migrations/
-- Connection handling in lib/supabase.ts
-- Data fetching with error handling and loading states
+## Firebase Integration
+- Authentication: Email/password and Google sign-in (see lib/AuthContext.tsx)
+- Firestore: Document CRUD operations with TypeScript support (see lib/firestore.ts)
+- Storage: File upload/download utilities (see lib/storage.ts)
+- Cloud Functions: Integration available through lib/firebase.ts
+- Security: Firebase config in lib/firebase.ts with proper environment handling
+- User profiles stored in Firestore 'users' collection
 
 ## Performance Optimization
 - Code splitting with React.lazy() and Suspense
@@ -46,3 +49,4 @@
 - Memoization with React.memo and useMemo where appropriate
 - Debounced search inputs
 - Optimized re-renders with proper state management
+- Firebase offline persistence enabled
