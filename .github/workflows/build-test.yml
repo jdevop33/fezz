@@ -25,7 +25,7 @@ jobs:
         run: npm run lint || echo "Lint command not available"
         
       - name: Run Tests
-        run: npm test || echo "No tests available"
+        run: npm test
         
       - name: Build
         run: npm run build

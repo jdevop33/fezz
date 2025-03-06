@@ -18,7 +18,7 @@ jobs:
         run: npm ci
         
       - name: Run Tests
-        run: npm test || echo "No tests available"
+        run: npm test
         
       - name: Build
         run: npm run build
@@ -31,10 +31,9 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           
       - name: Deploy to Firebase Preview Channel
-        uses: FirebaseExtended/action-hosting-deploy@v0
+        uses: w9jds/firebase-action@master
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          projectId: ${{ secrets.FIREBASE_PROJECT_ID }}
+          args: hosting:channel:deploy PR-${{ github.event.pull_request.number }} --expires 7d
         env:
-          FIREBASE_CLI_PREVIEWS: hostingchannels
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          PROJECT_ID: fezz-452821

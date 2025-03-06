@@ -52,8 +52,14 @@ These secrets must be set in the GitHub repository settings:
 - `FIREBASE_STORAGE_BUCKET`: Your Firebase storage bucket
 - `FIREBASE_MESSAGING_SENDER_ID`: Your Firebase messaging sender ID
 - `FIREBASE_APP_ID`: Your Firebase app ID
-- `FIREBASE_SERVICE_ACCOUNT`: JSON key for a Firebase service account with deployment permissions
-- `FIREBASE_TOKEN`: Firebase CLI token (for rollback workflow)
+- `FIREBASE_TOKEN`: Firebase CLI token for deployment and rollback
+
+### How to Generate Firebase Token
+
+1. Install Firebase CLI: `npm install -g firebase-tools`
+2. Login to Firebase: `firebase login`
+3. Generate CI token: `firebase login:ci`
+4. Copy the token and add it as a secret in GitHub repository settings
 
 ## How to Trigger a Manual Rollback
 

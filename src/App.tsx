@@ -35,6 +35,7 @@ const AdminManagement = lazyWithSuspense(() => import('./pages/admin/AdminManage
 const SystemSettings = lazyWithSuspense(() => import('./pages/admin/SystemSettings'));
 const LoginPage = lazyWithSuspense(() => import('./pages/LoginPage'));
 const SetupPage = lazyWithSuspense(() => import('./pages/SetupPage'));
+const NotFoundPage = lazyWithSuspense(() => import('./pages/NotFoundPage'));
 
 // Create a simple products page that uses our ProductList component
 const ProductsPage = lazyWithSuspense(() => Promise.resolve({
@@ -146,7 +147,7 @@ const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <Navigate to="/" replace />
+    element: <NotFoundPage />
   }
 ], {
   future: {

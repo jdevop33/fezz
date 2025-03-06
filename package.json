@@ -8,8 +8,12 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "echo 'No tests specified'",
     "deploy": "npm run build && firebase deploy",
     "deploy:hosting": "npm run build && firebase deploy --only hosting",
+    "migrate": "node --experimental-json-modules scripts/migrate-to-firebase.js",
+    "create-env": "node scripts/create-env.js",
+    "setup": "npm run create-env && npm run migrate",
     "package": "npm run build && mkdir -p pouches-deployment && cp -r dist firestore.rules firestore.indexes.json storage.rules firebase.json .firebaserc .env.production pouches-deployment && zip -r pouches-deployment.zip pouches-deployment && echo 'Deployment package created: pouches-deployment.zip'"
   },
   "dependencies": {
