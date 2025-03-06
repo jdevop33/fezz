@@ -66,6 +66,15 @@ For deployment authentication, you need to add your Firebase service account as 
 
 This service account is used by GitHub Actions to authenticate with Firebase for deployments, previews, and rollbacks.
 
+### Permissions
+
+The workflows have been configured with the necessary permissions:
+- `contents: read`: To read repository content
+- `id-token: write`: For authentication with Firebase
+- `pull-requests: write`: To comment on pull requests with preview URLs (PR workflow only)
+
+These permissions are already set in the workflow files and don't require additional configuration.
+
 ## How to Trigger a Manual Rollback
 
 1. Go to the "Actions" tab in the GitHub repository
