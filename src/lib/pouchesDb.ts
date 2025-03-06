@@ -20,6 +20,7 @@ import {
 export {
   setDocument,
   listenToDocument,
+  listenToQuery,
   queryDocuments,
   createDocument
 };

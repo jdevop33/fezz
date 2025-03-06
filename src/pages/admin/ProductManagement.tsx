@@ -398,6 +398,5 @@ function ProductManagement() {
     </div>
   );
 }
-}
 
 export default ProductManagement;
