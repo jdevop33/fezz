@@ -1,4 +1,6 @@
 {
-  "firebase_hosting": {},
+  "firebase_hosting": {
+    "deploymentHostingUrl": "https://fezz-452821.web.app"
+  },
   "secrets_manager": {}
 }
