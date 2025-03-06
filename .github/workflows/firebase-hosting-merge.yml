@@ -33,12 +33,11 @@ jobs:
       
       - name: Create Service Account File
         run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > ${{ github.workspace }}/serviceAccount.json
-          cat ${{ github.workspace }}/serviceAccount.json
+          echo '${{ secrets.GCP_SA_KEY }}' > ${{ github.workspace }}/serviceAccount.json
         
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@v12.4.0
         with:
           args: deploy --only hosting
         env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}

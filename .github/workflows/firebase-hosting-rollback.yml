@@ -18,7 +18,7 @@ jobs:
         with:
           args: hosting:clone ${{ inputs.version != '' && format('fezz-452821:{0}', inputs.version) || 'fezz-452821:live^1' }} fezz-452821:live
         env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
           
       - name: Notify Success
         run: echo "Rollback completed successfully!"
