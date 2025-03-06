@@ -14,11 +14,15 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Rollback Firebase Hosting
-        uses: w9jds/firebase-action@v12.4.0
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          args: hosting:clone ${{ inputs.version != '' && format('fezz-452821:{0}', inputs.version) || 'fezz-452821:live^1' }} fezz-452821:live
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.GCP_SA_KEY }}'
+          projectId: fezz-452821
+          channelId: live
+          expires: 30d
+          entryPoint: "."
+          target: ${{ inputs.version != '' && inputs.version || 'live^1' }}
           
       - name: Notify Success
         run: echo "Rollback completed successfully!"

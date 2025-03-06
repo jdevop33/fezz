@@ -36,8 +36,9 @@ jobs:
           echo '${{ secrets.GCP_SA_KEY }}' > ${{ github.workspace }}/serviceAccount.json
         
       - name: Deploy to Firebase
-        uses: w9jds/firebase-action@v12.4.0
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          args: deploy --only hosting
-        env:
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.GCP_SA_KEY }}'
+          projectId: fezz-452821
+          channelId: live
