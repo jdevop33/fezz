@@ -9,11 +9,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "echo 'No tests specified'",
-    "deploy": "npm run build && firebase deploy",
-    "deploy:hosting": "npm run build && firebase deploy --only hosting",
+    "deploy": "bash scripts/deploy.sh",
+    "deploy:hosting": "bash scripts/deploy.sh",
     "migrate": "node --experimental-json-modules scripts/migrate-to-firebase.js",
     "create-env": "node scripts/create-env.js",
-    "setup": "npm run create-env && npm run migrate",
+    "create-sa": "node scripts/create-service-account.js",
+    "setup": "npm run create-env && npm run create-sa && npm run migrate",
     "package": "npm run build && mkdir -p pouches-deployment && cp -r dist firestore.rules firestore.indexes.json storage.rules firebase.json .firebaserc .env.production pouches-deployment && zip -r pouches-deployment.zip pouches-deployment && echo 'Deployment package created: pouches-deployment.zip'"
   },
   "dependencies": {

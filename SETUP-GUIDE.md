@@ -65,7 +65,14 @@ Now this user has owner privileges and can manage admins and system settings.
 Deploy to Firebase Hosting:
 
 ```bash
+# This will create the service account file, build the app, and deploy
 npm run deploy
+```
+
+You can also run the deploy script directly:
+
+```bash
+bash scripts/deploy.sh
 ```
 
 ### CI/CD Setup

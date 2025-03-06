@@ -8,9 +8,6 @@ name: Deploy to Firebase Hosting on merge
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - uses: actions/checkout@v3
       
@@ -34,15 +31,14 @@ jobs:
       - name: Build
         run: npm run build
       
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-        
-      - name: Authorize Firebase
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          
-      - name: Deploy to Firebase
+      - name: Create Service Account File
         run: |
-          # Deploy to Firebase using authorized account
-          firebase deploy --only hosting --project fezz-452821
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > ${{ github.workspace }}/serviceAccount.json
+          cat ${{ github.workspace }}/serviceAccount.json
+        
+      - name: Deploy to Firebase
+        uses: w9jds/firebase-action@v12.4.0
+        with:
+          args: deploy --only hosting
+        env:
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
