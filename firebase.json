@@ -12,6 +12,9 @@
         "destination": "/index.html"
       }
     ],
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "predeploy": ["npm run build"],
     "headers": [
       {
         "source": "**/*.@(js|css)",

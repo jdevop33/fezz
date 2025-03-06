@@ -1,0 +1,30 @@
+name: Rollback Firebase Hosting
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to rollback to (leave empty for previous version)'
+        required: false
+        default: ''
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+      
+      - name: Rollback to Specific Version
+        if: inputs.version != ''
+        run: |
+          firebase hosting:clone fezz-452821:${{ inputs.version }} fezz-452821:live --token "${{ secrets.FIREBASE_TOKEN }}"
+        
+      - name: Rollback to Previous Version
+        if: inputs.version == ''
+        run: |
+          firebase hosting:clone fezz-452821:live^1 fezz-452821:live --token "${{ secrets.FIREBASE_TOKEN }}"
+          
+      - name: Notify Success
+        run: echo "Rollback completed successfully!"
