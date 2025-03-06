@@ -16,6 +16,14 @@ import {
   listenToQuery
 } from './firestore';
 
+// Re-export these functions so they can be used by other modules
+export {
+  setDocument,
+  listenToDocument,
+  queryDocuments,
+  createDocument
+};
+
 // Base interface for firestore documents
 export interface BaseDocument {
   id: string;
@@ -40,13 +48,21 @@ export interface Product extends BaseDocument {
 // User Interface
 export interface User extends BaseDocument {
   email: string;
+  firstName?: string;
+  lastName?: string;
   displayName?: string;
   photoURL?: string;
-  role: 'retail' | 'wholesale' | 'distributor' | 'admin';
-  approved: boolean;
+  role?: 'retail' | 'wholesale' | 'distributor' | 'admin';
+  approved?: boolean;
   referrerId?: string;
   commissionRate?: number;
   createdOrders?: string[];
+  companyName?: string;
+  accountType?: 'referrer' | 'distributor' | 'both';
+  phone?: string;
+  businessDescription?: string;
+  status?: string;
+  isAdmin?: boolean;
 }
 
 // Order Interface

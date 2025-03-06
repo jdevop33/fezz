@@ -45,18 +45,24 @@ function SignupPage() {
       await updateUserProfile(`${data.firstName} ${data.lastName}`);
       
       // Store additional user data in Firestore
-      await setDocument('users', userId, {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        companyName: data.companyName,
-        accountType: data.accountType,
-        phone: data.phone,
-        businessDescription: data.businessDescription,
-        createdAt: new Date(),
-        status: 'pending', // Account needs approval
-        isAdmin: false,
-      });
+      await setDocument(
+        'users', 
+        userId, 
+        {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          displayName: `${data.firstName} ${data.lastName}`,
+          companyName: data.companyName,
+          accountType: data.accountType,
+          phone: data.phone,
+          businessDescription: data.businessDescription,
+          status: 'pending', // Account needs approval
+          role: data.accountType === 'both' ? 'distributor' : 'wholesale',
+          approved: false, // Needs admin approval
+          isAdmin: false,
+        }
+      );
       
       toast.success('Account created successfully! Please wait for admin approval.');
       navigate('/dashboard');
