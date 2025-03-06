@@ -1,0 +1,48 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Authentication is required for all operations
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // User profile images
+    match /profiles/{userId}/{fileName} {
+      // Allow users to upload their own profile images
+      allow read: if true;  // Public read for profiles
+      allow write: if request.auth.uid == userId || isAdmin();
+    }
+
+    // Product images
+    match /products/{productId}/{fileName} {
+      // Everyone can read product images
+      allow read: if true;
+      // Only admins can upload/modify product images
+      allow write: if isAdmin();
+    }
+
+    // Order attachments
+    match /orders/{orderId}/{fileName} {
+      // Order owner, assigned distributor, or admin can read
+      allow read: if request.auth.uid == getOrderUserId(orderId) || 
+                   request.auth.uid == getOrderDistributorId(orderId) || 
+                   isAdmin();
+      // Only distributor assigned to order or admin can upload/modify
+      allow write: if request.auth.uid == getOrderDistributorId(orderId) || isAdmin();
+    }
+
+    // Helper functions
+    function isAdmin() {
+      return request.auth != null && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    function getOrderUserId(orderId) {
+      return get(/databases/$(database)/documents/orders/$(orderId)).data.userId;
+    }
+
+    function getOrderDistributorId(orderId) {
+      return get(/databases/$(database)/documents/orders/$(orderId)).data.distributorId;
+    }
+  }
+}
