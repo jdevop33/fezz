@@ -30,10 +30,14 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           
-      - name: Deploy to Firebase Preview Channel
-        uses: w9jds/firebase-action@master
+      - name: Setup Firebase
+        uses: 'google-github-actions/auth@v2'
         with:
-          args: hosting:channel:deploy PR-${{ github.event.pull_request.number }} --expires 7d
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-          PROJECT_ID: fezz-452821
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          
+      - name: Deploy to Firebase Preview Channel
+        uses: 'google-github-actions/deploy-firebase@v1'
+        with:
+          project_id: fezz-452821
+          preview_channel: PR-${{ github.event.pull_request.number }}
+          expires: 7d

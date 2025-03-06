@@ -13,18 +13,23 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
+      - name: Setup Firebase
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
       
       - name: Rollback to Specific Version
         if: inputs.version != ''
         run: |
-          firebase hosting:clone fezz-452821:${{ inputs.version }} fezz-452821:live --token "${{ secrets.FIREBASE_TOKEN }}"
+          firebase hosting:clone fezz-452821:${{ inputs.version }} fezz-452821:live
         
       - name: Rollback to Previous Version
         if: inputs.version == ''
         run: |
-          firebase hosting:clone fezz-452821:live^1 fezz-452821:live --token "${{ secrets.FIREBASE_TOKEN }}"
+          firebase hosting:clone fezz-452821:live^1 fezz-452821:live
           
       - name: Notify Success
         run: echo "Rollback completed successfully!"
