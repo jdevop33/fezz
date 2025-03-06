@@ -35,18 +35,19 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
         
-      - name: Write Service Account
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > service-account.json
+      - name: Authorize Firebase
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
       
       - name: Deploy to Firebase Preview Channel
         run: |
-          export GOOGLE_APPLICATION_CREDENTIALS="$PWD/service-account.json"
-          firebase hosting:channel:deploy pr-${{ github.event.pull_request.number }} --project fezz-452821 --json
+          firebase hosting:channel:deploy pr-${{ github.event.pull_request.number }} --project fezz-452821
           
       - name: Find Preview URL
         id: find_url
         run: |
-          PREVIEW_URL=$(firebase hosting:channel:list --project fezz-452821 --json | grep -o 'https://[^"]*' | head -1)
+          PREVIEW_URL=$(firebase hosting:channel:list --project fezz-452821 | grep -o 'https://[^"]*' | head -1)
           echo "PREVIEW_URL=$PREVIEW_URL" >> $GITHUB_ENV
           
       - name: Comment on PR

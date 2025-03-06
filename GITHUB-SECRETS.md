@@ -10,8 +10,10 @@ This is the most important secret for deployment:
 2. Navigate to "Secrets and variables" > "Actions"
 3. Click "New repository secret"
 4. Name: `FIREBASE_SERVICE_ACCOUNT`
-5. Value: Copy and paste the entire service account JSON from FIREBASE-SERVICE-ACCOUNT.md
+5. Value: Copy and paste the entire service account JSON from FIREBASE-SERVICE-ACCOUNT.md exactly as shown, including all quotes, brackets, and special characters
 6. Click "Add secret"
+
+> **IMPORTANT**: Make sure to copy the entire JSON, including opening and closing braces. The JSON must be valid and properly formatted.
 
 ## 2. Add Firebase Configuration Secrets
 

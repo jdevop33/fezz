@@ -2,7 +2,15 @@
 
 If you're seeing a "Not Found" page after deploying to Firebase Hosting, try these fixes:
 
-## 1. Set up environment variables
+## 1. Verify GitHub Secrets
+
+First, check that your GitHub secrets are correctly set up:
+
+1. Go to your GitHub repository > Settings > Secrets and variables > Actions
+2. Verify that `FIREBASE_SERVICE_ACCOUNT` contains the complete JSON service account key
+3. Make sure all Firebase configuration secrets are present
+
+## 2. Set up environment variables
 
 Run the script to set up your environment variables:
 

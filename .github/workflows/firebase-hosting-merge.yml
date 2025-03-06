@@ -37,10 +37,12 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
         
-      - name: Write Service Account
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > service-account.json
-      
+      - name: Authorize Firebase
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          
       - name: Deploy to Firebase
         run: |
-          export GOOGLE_APPLICATION_CREDENTIALS="$PWD/service-account.json"
-          firebase deploy --only hosting --project fezz-452821 --json
+          # Deploy to Firebase using authorized account
+          firebase deploy --only hosting --project fezz-452821
