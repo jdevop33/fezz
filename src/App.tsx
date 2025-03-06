@@ -1,8 +1,10 @@
-import React, { lazy, Suspense, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './components/ThemeProvider';
 import { AuthProvider, useAuth } from './lib/AuthContext';
+import { CartProvider } from './lib/hooks/useCart';
+import { initializeDatabase } from './lib/initDb';
 
 // Loading fallback
 const PageLoader = () => (
@@ -29,8 +31,55 @@ const AdminDashboard = lazyWithSuspense(() => import('./pages/AdminDashboard'));
 const ProductManagement = lazyWithSuspense(() => import('./pages/admin/ProductManagement'));
 const CategoryManagement = lazyWithSuspense(() => import('./pages/admin/CategoryManagement'));
 const PendingApprovals = lazyWithSuspense(() => import('./pages/admin/PendingApprovals'));
-// Add a login page
 const LoginPage = lazyWithSuspense(() => import('./pages/LoginPage'));
+
+// Create a simple products page that uses our ProductList component
+const ProductsPage = lazyWithSuspense(() => Promise.resolve({
+  default: () => {
+    const ProductList = React.lazy(() => import('./components/products/ProductList'));
+    const ShoppingCart = React.lazy(() => import('./components/products/ShoppingCart'));
+    const { useCart } = require('./lib/hooks');
+    
+    // Create the products page component
+    const ProductsPageComponent = () => {
+      const [isCartOpen, setIsCartOpen] = useState(false);
+      const { itemCount } = useCart();
+      
+      return (
+        <div className="container mx-auto px-4 py-8">
+          {/* Header with title and cart button */}
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Pouches Products</h1>
+            <button 
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              onClick={() => setIsCartOpen(true)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>Cart ({itemCount})</span>
+            </button>
+          </div>
+          
+          {/* Product list */}
+          <Suspense fallback={<PageLoader />}>
+            <ProductList showFilters={true} />
+          </Suspense>
+          
+          {/* Shopping cart */}
+          <Suspense fallback={null}>
+            <ShoppingCart 
+              isOpen={isCartOpen} 
+              onClose={() => setIsCartOpen(false)} 
+            />
+          </Suspense>
+        </div>
+      );
+    };
+    
+    return <ProductsPageComponent />;
+  }
+}));
 
 // Protected route wrapper component
 const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) => {
@@ -73,6 +122,10 @@ const router = createBrowserRouter([
     element: <SignupPage />
   },
   {
+    path: "/products",
+    element: <ProductsPage />
+  },
+  {
     path: "/dashboard",
     element: <ProtectedRoute><DashboardPage /></ProtectedRoute>
   },
@@ -111,24 +164,61 @@ const router = createBrowserRouter([
 });
 
 function App() {
+  const [dbInitialized, setDbInitialized] = useState(false);
+  const [initError, setInitError] = useState<Error | null>(null);
+
+  // Initialize the database when the app starts
+  useEffect(() => {
+    const initDb = async () => {
+      try {
+        // Only initialize if in development mode or forced by query parameter
+        // In production, you might want to handle this differently
+        if (process.env.NODE_ENV === 'development' || new URLSearchParams(window.location.search).has('init-db')) {
+          console.log('Initializing database...');
+          await initializeDatabase();
+          console.log('Database initialized successfully');
+        }
+        setDbInitialized(true);
+      } catch (error) {
+        console.error('Error initializing database:', error);
+        setInitError(error instanceof Error ? error : new Error('Unknown error initializing database'));
+        setDbInitialized(true); // Still set to true so we don't block the app from loading
+      }
+    };
+
+    initDb();
+  }, []);
+
+  // Show loading screen while database is initializing
+  if (!dbInitialized) {
+    return <PageLoader />;
+  }
+
   return (
     <ThemeProvider defaultTheme="system">
       <AuthProvider>
-        <Toaster 
-          position="top-right" 
-          closeButton 
-          theme="system"
-          className="toaster-wrapper"
-          toastOptions={{
-            classNames: {
-              toast: "group toast group-[.toaster]:bg-white group-[.toaster]:text-surface-900 group-[.toaster]:border-surface-200 group-[.toaster]:shadow-soft-xl dark:group-[.toaster]:bg-surface-800 dark:group-[.toaster]:text-surface-50 dark:group-[.toaster]:border-surface-700",
-              title: "text-surface-900 dark:text-white text-sm font-medium",
-              description: "text-surface-600 dark:text-surface-300 text-sm",
-              success: "text-success-500"
-            }
-          }}
-        />
-        <RouterProvider router={router} />
+        <CartProvider>
+          <Toaster 
+            position="top-right" 
+            closeButton 
+            theme="system"
+            className="toaster-wrapper"
+            toastOptions={{
+              classNames: {
+                toast: "group toast group-[.toaster]:bg-white group-[.toaster]:text-surface-900 group-[.toaster]:border-surface-200 group-[.toaster]:shadow-soft-xl dark:group-[.toaster]:bg-surface-800 dark:group-[.toaster]:text-surface-50 dark:group-[.toaster]:border-surface-700",
+                title: "text-surface-900 dark:text-white text-sm font-medium",
+                description: "text-surface-600 dark:text-surface-300 text-sm",
+                success: "text-success-500"
+              }
+            }}
+          />
+          {initError && (
+            <div className="fixed top-0 left-0 right-0 bg-red-500 text-white text-center p-2 z-50">
+              Database initialization error: {initError.message}
+            </div>
+          )}
+          <RouterProvider router={router} />
+        </CartProvider>
       </AuthProvider>
     </ThemeProvider>
   );

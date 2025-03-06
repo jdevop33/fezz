@@ -4,7 +4,7 @@ import { Building2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../lib/AuthContext';
-import { setDocument } from '../lib/firestore';
+import { setDocument } from '../lib/pouchesDb';
 
 interface SignupFormData {
   firstName: string;

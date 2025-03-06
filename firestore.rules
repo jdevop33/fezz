@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for user roles and authentication
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isDistributor() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'distributor' &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approved == true;
+    }
+    
+    function isWholesale() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'wholesale' &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approved == true;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Products collection
+    match /products/{productId} {
+      allow read: if true; // Anyone can read products
+      allow create, update, delete: if isAdmin(); // Only admins can modify products
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Orders collection
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || // User's own orders
+        isAdmin() || // Admin can see all orders
+        (isDistributor() && resource.data.distributorId == request.auth.uid) || // Distributor assigned to the order
+        (isWholesale() && resource.data.wholesalerId == request.auth.uid) // Wholesale buyer who referred the order
+      );
+      
+      allow create: if isAuthenticated(); // Any authenticated user can create an order
+      
+      allow update: if isAdmin() || 
+        (isDistributor() && resource.data.distributorId == request.auth.uid) || // Distributor can update their assigned orders
+        (isOwner(resource.data.userId) && resource.data.status == "pending"); // Users can update their own pending orders
+      
+      allow delete: if isAdmin();
+    }
+    
+    // Transactions collection
+    match /transactions/{transactionId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || // User's own transactions
+        isAdmin()
+      );
+      
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Commissions collection
+    match /commissions/{commissionId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || // User's own commissions
+        isAdmin()
+      );
+      
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Settings collection (for user roles, system config, etc.)
+    match /settings/{settingId} {
+      allow read: if true; // Anyone can read settings
+      allow write: if isAdmin(); // Only admins can modify settings
+    }
+  }
+}
