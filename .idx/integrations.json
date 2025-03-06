@@ -2,5 +2,6 @@
   "firebase_hosting": {
     "deploymentHostingUrl": "https://fezz-452821.web.app"
   },
+  "google_maps_platform": {},
   "secrets_manager": {}
 }

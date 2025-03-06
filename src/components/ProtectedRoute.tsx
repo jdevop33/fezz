@@ -1,39 +1,44 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { auth } from '../lib/firebase';
+import { getUser } from '../lib/pouchesDb';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   isAdmin?: boolean;
+  isOwner?: boolean;
 }
 
-function ProtectedRoute({ children, isAdmin = false }: ProtectedRouteProps) {
+function ProtectedRoute({ children, isAdmin = false, isOwner = false }: ProtectedRouteProps) {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    async function checkAuth() {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
         if (!user) {
           setIsAuthenticated(false);
           setHasAccess(false);
+          setLoading(false);
           return;
         }
 
         setIsAuthenticated(true);
 
-        if (isAdmin) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('is_admin')
-            .eq('id', user.id)
-            .single();
-
-          setHasAccess(profile?.is_admin ?? false);
+        // If we need to check for special permissions
+        if (isAdmin || isOwner) {
+          const userProfile = await getUser(user.uid);
+          
+          if (isOwner) {
+            // Owner check takes precedence - owners should have access to everything
+            setHasAccess(userProfile?.isOwner === true);
+          } else if (isAdmin) {
+            // Admin check - either isAdmin or isOwner should grant access
+            setHasAccess(userProfile?.isAdmin === true || userProfile?.isOwner === true);
+          }
         } else {
+          // Regular authenticated route
           setHasAccess(true);
         }
       } catch (error) {
@@ -43,10 +48,11 @@ function ProtectedRoute({ children, isAdmin = false }: ProtectedRouteProps) {
       } finally {
         setLoading(false);
       }
-    }
+    });
 
-    checkAuth();
-  }, [isAdmin]);
+    // Cleanup subscription
+    return () => unsubscribe();
+  }, [isAdmin, isOwner]);
 
   if (loading) {
     return (

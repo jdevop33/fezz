@@ -1,17 +1,56 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Building2, Users, Package, Battery as Category, Settings, LogOut } from 'lucide-react';
+import { Building2, Users, Package, Battery as Category, Settings, LogOut, Shield, UserCog } from 'lucide-react';
 import clsx from 'clsx';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { auth } from '../lib/firebase';
+import { getUser, User } from '../lib/pouchesDb';
 
-const navigation = [
+// Navigation for admin users
+const adminNavigation = [
   { name: 'Products', href: '/admin/products', icon: Package },
   { name: 'Categories', href: '/admin/categories', icon: Category },
   { name: 'Pending Approvals', href: '/admin/approvals', icon: Users },
 ];
 
+// Additional navigation items for owners
+const ownerNavigation = [
+  { name: 'Admin Management', href: '/admin/admins', icon: UserCog, ownerOnly: true },
+  { name: 'System Settings', href: '/admin/system', icon: Shield, ownerOnly: true },
+];
+
 function AdminDashboard() {
   const location = useLocation();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try {
+          const userData = await getUser(user.uid);
+          setCurrentUser(userData);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setCurrentUser(null);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Combine navigation items based on user role
+  const navigationItems = [...adminNavigation];
+  
+  // Only add owner-specific navigation if user is an owner
+  if (currentUser?.isOwner) {
+    navigationItems.push(...ownerNavigation);
+  }
 
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-900 text-surface-900 dark:text-white">
@@ -23,14 +62,21 @@ function AdminDashboard() {
               <div className="flex items-center justify-between flex-shrink-0 px-4 pb-4 border-b border-surface-200 dark:border-surface-700">
                 <div className="flex items-center">
                   <Building2 className="h-8 w-8 text-primary-600 dark:text-primary-400" />
-                  <span className="ml-2 text-xl font-semibold">Admin</span>
+                  <span className="ml-2 text-xl font-semibold">
+                    {currentUser?.isOwner ? 'Owner' : 'Admin'}
+                  </span>
                 </div>
                 <ThemeToggle />
               </div>
               
               <div className="mt-5 flex-grow flex flex-col justify-between">
                 <nav className="flex-1 px-2 space-y-1">
-                  {navigation.map((item) => {
+                  {navigationItems.map((item) => {
+                    // Skip items that are owner-only if user is not an owner
+                    if (item.ownerOnly && !currentUser?.isOwner) {
+                      return null;
+                    }
+                    
                     const isActive = location.pathname === item.href || 
                                     (item.href !== '/admin/approvals' && location.pathname.startsWith(item.href));
                     return (

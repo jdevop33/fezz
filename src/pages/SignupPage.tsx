@@ -37,14 +37,20 @@ function SignupPage() {
       setLoading(true);
       setError('');
       
-      // Create the user account
+      // Create the user account in Firebase Auth
       const userCredential = await signup(data.email, data.password);
       const userId = userCredential.user.uid;
       
       // Update user profile with display name
       await updateUserProfile(`${data.firstName} ${data.lastName}`);
       
-      // Store additional user data in Firestore
+      // Get role based on account type
+      let role = 'wholesale';
+      if (data.accountType === 'both') {
+        role = 'distributor';
+      }
+      
+      // Store all user data in Firestore only
       await setDocument(
         'users', 
         userId, 
@@ -58,9 +64,14 @@ function SignupPage() {
           phone: data.phone,
           businessDescription: data.businessDescription,
           status: 'pending', // Account needs approval
-          role: data.accountType === 'both' ? 'distributor' : 'wholesale',
+          role: role,
           approved: false, // Needs admin approval
           isAdmin: false,
+          isOwner: false, // Default not an owner
+          isReferrer: data.accountType === 'referrer' || data.accountType === 'both',
+          isDistributor: data.accountType === 'distributor' || data.accountType === 'both',
+          commissionRate: data.accountType === 'both' ? 10 : 5,
+          createdOrders: []
         }
       );
       

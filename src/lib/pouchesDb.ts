@@ -53,7 +53,7 @@ export interface User extends BaseDocument {
   lastName?: string;
   displayName?: string;
   photoURL?: string;
-  role?: 'retail' | 'wholesale' | 'distributor' | 'admin';
+  role?: 'retail' | 'wholesale' | 'distributor' | 'admin' | 'owner';
   approved?: boolean;
   referrerId?: string;
   commissionRate?: number;
@@ -64,6 +64,7 @@ export interface User extends BaseDocument {
   businessDescription?: string;
   status?: string;
   isAdmin?: boolean;
+  isOwner?: boolean;
 }
 
 // Order Interface
@@ -210,6 +211,13 @@ export const updateUser = async (userId: string, data: Partial<User>): Promise<v
   return updateDocument(COLLECTIONS.USERS, userId, data);
 };
 
+export const approveUserAccount = async (userId: string, approved: boolean): Promise<void> => {
+  return updateDocument(COLLECTIONS.USERS, userId, { 
+    approved,
+    status: approved ? 'active' : 'rejected'
+  });
+};
+
 export const getUsersByRole = async (role: User['role']): Promise<User[]> => {
   return queryDocuments<User>(COLLECTIONS.USERS, [
     where('role', '==', role)
@@ -219,7 +227,8 @@ export const getUsersByRole = async (role: User['role']): Promise<User[]> => {
 export const getPendingApprovals = async (): Promise<User[]> => {
   return queryDocuments<User>(COLLECTIONS.USERS, [
     where('approved', '==', false),
-    where('role', 'in', ['wholesale', 'distributor'])
+    where('status', '==', 'pending'),
+    orderBy('createdAt', 'desc')
   ]);
 };
 
@@ -380,6 +389,10 @@ export async function initializeUserRoles(): Promise<void> {
       admin: {
         name: 'Administrator',
         permissions: ['manage_users', 'manage_products', 'verify_payments', 'assign_orders', 'manage_commissions']
+      },
+      owner: {
+        name: 'Owner',
+        permissions: ['manage_users', 'manage_products', 'verify_payments', 'assign_orders', 'manage_commissions', 'manage_admins', 'view_all_financials', 'approve_accounts']
       }
     };
     
