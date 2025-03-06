@@ -1,4 +1,5 @@
 import { initializeProductsDatabase, initializeUserRoles, Product } from './pouchesDb';
+import { createInitialOwner } from './createOwner';
 
 // Sample product data based on the nicotine pouches inventory
 const sampleProducts: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[] = [
@@ -155,6 +156,20 @@ export async function initializeDatabase(): Promise<void> {
     console.log('Database initialization completed successfully!');
   } catch (error) {
     console.error('Fatal error during database initialization:', error);
+    throw error;
+  }
+}
+
+// Create an initial owner account for first-time setup
+// Note: This should only be called explicitly when setting up the system
+export async function setupInitialOwner(email: string, password: string): Promise<string> {
+  console.log('Setting up initial owner account...');
+  try {
+    const ownerId = await createInitialOwner(email, password);
+    console.log('Initial owner account created successfully!');
+    return ownerId;
+  } catch (error) {
+    console.error('Error creating initial owner account:', error);
     throw error;
   }
 }

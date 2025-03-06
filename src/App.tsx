@@ -31,7 +31,10 @@ const AdminDashboard = lazyWithSuspense(() => import('./pages/AdminDashboard'));
 const ProductManagement = lazyWithSuspense(() => import('./pages/admin/ProductManagement'));
 const CategoryManagement = lazyWithSuspense(() => import('./pages/admin/CategoryManagement'));
 const PendingApprovals = lazyWithSuspense(() => import('./pages/admin/PendingApprovals'));
+const AdminManagement = lazyWithSuspense(() => import('./pages/admin/AdminManagement'));
+const SystemSettings = lazyWithSuspense(() => import('./pages/admin/SystemSettings'));
 const LoginPage = lazyWithSuspense(() => import('./pages/LoginPage'));
+const SetupPage = lazyWithSuspense(() => import('./pages/SetupPage'));
 
 // Create a simple products page that uses our ProductList component
 const ProductsPage = lazyWithSuspense(() => Promise.resolve({
@@ -81,31 +84,8 @@ const ProductsPage = lazyWithSuspense(() => Promise.resolve({
   }
 }));
 
-// Protected route wrapper component
-const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) => {
-  const { currentUser, loading } = useAuth();
-  
-  if (loading) {
-    return <PageLoader />;
-  }
-  
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  // Check for admin role if required
-  if (requireAdmin) {
-    // This would check a custom claim or a field in the user's Firestore document
-    // For demo purposes, we're just checking if the email contains "admin"
-    const isAdmin = currentUser.email?.includes('admin');
-    
-    if (!isAdmin) {
-      return <Navigate to="/dashboard" replace />;
-    }
-  }
-  
-  return <>{children}</>;
-};
+// Import our real ProtectedRoute component
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Create router with future flags enabled
 const router = createBrowserRouter([
@@ -122,6 +102,10 @@ const router = createBrowserRouter([
     element: <SignupPage />
   },
   {
+    path: "/setup",
+    element: <SetupPage />
+  },
+  {
     path: "/products",
     element: <ProductsPage />
   },
@@ -131,7 +115,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>,
+    element: <ProtectedRoute isAdmin><AdminDashboard /></ProtectedRoute>,
     children: [
       {
         index: true,
@@ -148,6 +132,15 @@ const router = createBrowserRouter([
       {
         path: "approvals",
         element: <PendingApprovals />
+      },
+      // Owner-only routes
+      {
+        path: "admins",
+        element: <ProtectedRoute isOwner><AdminManagement /></ProtectedRoute>
+      },
+      {
+        path: "system",
+        element: <ProtectedRoute isOwner><SystemSettings /></ProtectedRoute>
       }
     ]
   },
