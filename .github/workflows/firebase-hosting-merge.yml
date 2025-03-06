@@ -32,12 +32,13 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
           
-      - name: Setup Firebase
-        uses: 'google-github-actions/auth@v2'
-        with:
-          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-          
+      - name: Create Service Account File
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > ${{ github.workspace }}/service-account.json
+        
       - name: Deploy to Firebase
-        uses: 'google-github-actions/deploy-firebase@v1'
+        uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          project_id: fezz-452821
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          channelId: live
+          projectId: fezz-452821
