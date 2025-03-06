@@ -124,18 +124,37 @@ const sampleProducts: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[] = [
   }
 ];
 
-// Initialize the database
+// Initialize the database with better error handling and recovery
 export async function initializeDatabase(): Promise<void> {
+  console.log('Starting database initialization process...');
+  
   try {
-    // First initialize the user roles
-    await initializeUserRoles();
+    // First try to initialize user roles
+    console.log('Step 1: Initializing user roles...');
+    try {
+      await initializeUserRoles();
+      console.log('User roles initialized successfully.');
+    } catch (roleError) {
+      console.error('Error initializing user roles:', roleError);
+      console.log('Continuing with product initialization despite role initialization failure.');
+    }
     
-    // Then initialize the products
-    await initializeProductsDatabase(sampleProducts);
+    // Then try to initialize products - with a short delay to allow Firebase to process
+    console.log('Waiting 1 second before proceeding to product initialization...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    console.log('Step 2: Initializing products...');
+    try {
+      await initializeProductsDatabase(sampleProducts);
+      console.log('Products initialized successfully.');
+    } catch (productError) {
+      console.error('Error initializing products:', productError);
+      throw productError;
+    }
     
     console.log('Database initialization completed successfully!');
   } catch (error) {
-    console.error('Error during database initialization:', error);
+    console.error('Fatal error during database initialization:', error);
     throw error;
   }
 }

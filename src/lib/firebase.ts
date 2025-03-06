@@ -23,13 +23,9 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
-// Connect to emulators in development environment
-if (import.meta.env.DEV) {
-  // Uncomment these lines when using Firebase emulators for local development
-  // connectAuthEmulator(auth, "http://localhost:9099");
-  // connectFirestoreEmulator(db, "localhost", 8080);
-  // connectStorageEmulator(storage, "localhost", 9199);
-  // connectFunctionsEmulator(functions, "localhost", 5001);
-}
+// We're using the production Firebase instance for all environments
+// No emulators - this ensures consistent behavior across environments
+// For testing, you can create a separate Firebase project if needed
+console.log('Using production Firebase instance');
 
 export default app;

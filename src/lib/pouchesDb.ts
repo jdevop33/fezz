@@ -298,12 +298,44 @@ export const getPendingCommissions = async (): Promise<Commission[]> => {
   ]);
 };
 
-// Database Initialization Function
+// Database Initialization Function - optimized for batched operations
 export async function initializeProductsDatabase(products: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[]): Promise<void> {
   try {
-    for (const product of products) {
-      await createProduct(product);
+    // Process in smaller batches to avoid connection timeout
+    const batchSize = 3;
+    const batches = [];
+    
+    // Split into batches
+    for (let i = 0; i < products.length; i += batchSize) {
+      batches.push(products.slice(i, i + batchSize));
     }
+    
+    console.log(`Initializing products in ${batches.length} batches of ${batchSize} each`);
+    
+    // Process batches sequentially
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+      console.log(`Processing batch ${i+1}/${batches.length} with ${batch.length} products`);
+      
+      // Create promises for each product in the batch
+      const promises = batch.map(product => {
+        // Use a custom ID based on flavor and strength to avoid duplicates
+        const customId = `${product.flavor.toLowerCase().replace(/\s+/g, '-')}-${product.strength}mg`;
+        return setDocument(COLLECTIONS.PRODUCTS, customId, {
+          ...product,
+          id: customId
+        }, true); // Use merge:true to avoid overwriting existing products
+      });
+      
+      // Wait for all products in this batch to be created
+      await Promise.all(promises);
+      
+      // Add a small delay between batches
+      if (i < batches.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+    
     console.log('Products database initialized successfully!');
   } catch (error) {
     console.error('Error initializing products database:', error);
@@ -313,6 +345,8 @@ export async function initializeProductsDatabase(products: Omit<Product, 'id' | 
 
 export async function initializeUserRoles(): Promise<void> {
   try {
+    console.log('Initializing user roles...');
+    
     const userRoles = {
       retail: {
         name: 'Retail Customer',
@@ -331,9 +365,20 @@ export async function initializeUserRoles(): Promise<void> {
         permissions: ['manage_users', 'manage_products', 'verify_payments', 'assign_orders', 'manage_commissions']
       }
     };
-
-    for (const [role, data] of Object.entries(userRoles)) {
-      await setDocument(COLLECTIONS.SETTINGS, `role_${role}`, data);
+    
+    // Process one role at a time with a delay between each
+    const roles = Object.entries(userRoles);
+    
+    for (let i = 0; i < roles.length; i++) {
+      const [role, data] = roles[i];
+      console.log(`Setting up role: ${role}`);
+      
+      await setDocument(COLLECTIONS.SETTINGS, `role_${role}`, data, true); // Use merge: true
+      
+      // Add a small delay between roles
+      if (i < roles.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
     }
     
     console.log('User roles initialized successfully!');

@@ -167,26 +167,32 @@ function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
   const [initError, setInitError] = useState<Error | null>(null);
 
-  // Initialize the database when the app starts
+  // Initialize the database when the app starts - only when explicitly requested
   useEffect(() => {
-    const initDb = async () => {
-      try {
-        // Only initialize if in development mode or forced by query parameter
-        // In production, you might want to handle this differently
-        if (process.env.NODE_ENV === 'development' || new URLSearchParams(window.location.search).has('init-db')) {
-          console.log('Initializing database...');
-          await initializeDatabase();
-          console.log('Database initialized successfully');
-        }
-        setDbInitialized(true);
-      } catch (error) {
-        console.error('Error initializing database:', error);
-        setInitError(error instanceof Error ? error : new Error('Unknown error initializing database'));
-        setDbInitialized(true); // Still set to true so we don't block the app from loading
-      }
-    };
+    // Start with app ready to use - we'll only initialize DB on demand
+    setDbInitialized(true);
 
-    initDb();
+    // Check if initialization is requested
+    const shouldInitDb = new URLSearchParams(window.location.search).has('init-db');
+    
+    if (shouldInitDb) {
+      console.log('Database initialization requested via URL parameter');
+      setInitError(null); // Clear any previous errors
+      
+      // Initialize in a non-blocking way - app is already usable
+      (async () => {
+        try {
+          console.log('Starting database initialization...');
+          await initializeDatabase();
+          console.log('Database initialization completed successfully!');
+        } catch (error) {
+          console.error('Error during database initialization:', error);
+          setInitError(error instanceof Error ? error : new Error('Failed to initialize database'));
+        }
+      })();
+    } else {
+      console.log('Database initialization not requested. App ready to use with existing data.');
+    }
   }, []);
 
   // Show loading screen while database is initializing
