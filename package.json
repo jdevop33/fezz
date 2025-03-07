@@ -19,6 +19,10 @@
     "create-env": "node scripts/create-env.js",
     "create-sa": "node scripts/create-service-account.js",
     "setup": "npm run create-env && npm run firebase:init",
+    "setup:local-db": "node --experimental-json-modules scripts/setup-local-db.js",
+    "create:firebase-db": "node --experimental-json-modules scripts/create-and-initialize-db.js",
+    "emulators": "firebase emulators:start",
+    "dev:emulate": "cross-env VITE_USE_FIREBASE_EMULATORS=true vite",
     "package": "npm run build && mkdir -p pouches-deployment && cp -r dist firestore.rules firestore.indexes.json storage.rules firebase.json .firebaserc .env.production pouches-deployment && zip -r pouches-deployment.zip pouches-deployment && echo 'Deployment package created: pouches-deployment.zip'"
   },
   "dependencies": {
@@ -30,6 +34,7 @@
     "date-fns": "^3.3.1",
     "dotenv": "^16.4.7",
     "firebase": "^11.4.0",
+    "firebase-admin": "^13.2.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -47,6 +52,7 @@
     "@types/uuid": "^9.0.8",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",
+    "cross-env": "^7.0.3",
     "eslint": "^9.9.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.11",

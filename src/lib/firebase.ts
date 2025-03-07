@@ -34,9 +34,21 @@ export const analytics = async () => {
   return null;
 };
 
-// We're using the production Firebase instance for all environments
-// No emulators - this ensures consistent behavior across environments
-// For testing, you can create a separate Firebase project if needed
-console.log('Using production Firebase instance');
+// Use emulators in development mode if enabled
+const useEmulators = import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true';
+
+if (useEmulators) {
+  console.log('Using Firebase emulators for local development');
+  // Auth emulator usually runs on port 9099
+  connectAuthEmulator(auth, 'http://localhost:9099');
+  // Firestore emulator usually runs on port 8080
+  connectFirestoreEmulator(db, 'localhost', 8080);
+  // Storage emulator usually runs on port 9199
+  connectStorageEmulator(storage, 'localhost', 9199);
+  // Functions emulator usually runs on port 5001
+  connectFunctionsEmulator(functions, 'localhost', 5001);
+} else {
+  console.log('Using production Firebase instance');
+}
 
 export default app;
