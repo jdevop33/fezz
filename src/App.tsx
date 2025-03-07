@@ -86,6 +86,10 @@ const ProductsPage = lazyWithSuspense(() => Promise.resolve({
   }
 }));
 
+// Additional owner pages
+const PaymentsOverview = lazyWithSuspense(() => import('./pages/admin/PaymentsOverview'));
+const ReportsPage = lazyWithSuspense(() => import('./pages/admin/ReportsPage'));
+
 // Import our real ProtectedRoute component
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -135,7 +139,18 @@ const router = createBrowserRouter([
         path: "approvals",
         element: <PendingApprovals />
       },
-      // Owner-only routes
+      
+      // Finance (Owner-only routes)
+      {
+        path: "payments",
+        element: <ProtectedRoute isOwner><PaymentsOverview /></ProtectedRoute>
+      },
+      {
+        path: "reports",
+        element: <ProtectedRoute isOwner><ReportsPage /></ProtectedRoute>
+      },
+      
+      // Admin Management (Owner-only routes)
       {
         path: "admins",
         element: <ProtectedRoute isOwner><AdminManagement /></ProtectedRoute>

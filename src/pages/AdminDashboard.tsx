@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Building2, Users, Package, Battery as Category, Settings, LogOut, Shield, UserCog } from 'lucide-react';
+import { Building2, Users, Package, Battery as Category, Settings, LogOut, Shield, UserCog, CircleDollarSign, BarChart } from 'lucide-react';
 import clsx from 'clsx';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { auth } from '../lib/firebase';
@@ -15,6 +15,8 @@ const adminNavigation = [
 
 // Additional navigation items for owners
 const ownerNavigation = [
+  { name: 'Payments', href: '/admin/payments', icon: CircleDollarSign, ownerOnly: true },
+  { name: 'Reports', href: '/admin/reports', icon: BarChart, ownerOnly: true },
   { name: 'Admin Management', href: '/admin/admins', icon: UserCog, ownerOnly: true },
   { name: 'System Settings', href: '/admin/system', icon: Shield, ownerOnly: true },
 ];
