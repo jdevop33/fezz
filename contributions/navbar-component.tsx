@@ -1,11 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, User, Search, Menu, X, ChevronDown } from 'lucide-react';
 
+interface NavItem {
+  name: string;
+  href: string;
+  submenu?: NavItem[];
+}
+
 const Navbar = () => {
   // State for mobile menu and search box
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(3);
+  const [cartCount] = useState(3);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Handle scroll effect for navbar
@@ -43,7 +49,7 @@ const Navbar = () => {
   };
 
   // Handle keyboard accessibility
-  const handleKeyDown = (e, action) => {
+  const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       action();
@@ -51,7 +57,7 @@ const Navbar = () => {
   };
 
   // Navigation items
-  const navItems = [
+  const navItems: NavItem[] = [
     { name: 'Home', href: '#' },
     { 
       name: 'Products', 

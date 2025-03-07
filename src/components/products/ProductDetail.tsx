@@ -1,23 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Star, Minus, Plus, ChevronRight, Truck, Shield, CircleCheck, ShoppingCart, Heart } from 'lucide-react';
+import { Star, Minus, Plus, ChevronRight, Truck, Shield, CircleCheck, ShoppingCart, Heart, Edit, Trash } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useCart } from '../../lib/hooks/useCart';
+import { useAuth } from '../../lib/AuthContext';
 
 const ProductDetail = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { user } = useAuth();
   
+  // Check if user is admin or owner
+  const isAdmin = user?.isAdmin || user?.isOwner;
+  
+  interface Product {
+    id: string;
+    flavor: string;
+    strength: number;
+    price: number;
+    originalPrice?: number;
+    rating?: number;
+    reviewCount?: number;
+    imageUrl?: string;
+    isNew?: boolean;
+    count?: number;
+    itemPN?: string;
+    category?: string;
+    active?: boolean;
+    inventoryCount?: number;
+    description?: string;
+  }
+
+  interface RelatedProduct {
+    id: string;
+    flavor: string;
+    strength: number;
+    price: number;
+    imageUrl?: string;
+    rating?: number;
+    reviewCount?: number;
+    category?: string;
+    inventoryCount?: number;
+  }
+
   // State
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [readMore, setReadMore] = useState(false);
-  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<RelatedProduct[]>([]);
 
   // Get strengths for this flavor
   const strengthVariants = relatedProducts
@@ -46,8 +81,7 @@ const ProductDetail = () => {
           setProduct(productData);
           
           // Fetch related products with same category
-          const category = productData.category;
-          const flavor = productData.flavor;
+          // These values will be used in the implementation below
           
           // This would normally be a proper query, but we're simulating it here
           // In production, you'd use a query with where() to get related products
@@ -251,6 +285,25 @@ const ProductDetail = () => {
             <div className="mb-6">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-surface-900 sm:text-3xl">{product.flavor} {product.strength}mg</h1>
+                
+                {/* Admin controls */}
+                {isAdmin && (
+                  <div className="flex items-center gap-2">
+                    <Link 
+                      to={`/admin/products/edit/${product.id}`}
+                      className="rounded-md bg-primary-600 p-2 text-white hover:bg-primary-700"
+                      title="Edit product"
+                    >
+                      <Edit size={16} />
+                    </Link>
+                    <button 
+                      className="rounded-md bg-surface-200 p-2 text-surface-700 hover:bg-red-100 hover:text-red-600"
+                      title="Delete product"
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
               
               {/* Rating */}
@@ -285,7 +338,22 @@ const ProductDetail = () => {
                   </p>
                 )}
               </div>
-              <p className="mt-1 text-sm text-success-600">In stock and ready to ship</p>
+              <div className="mt-1 flex items-center gap-2">
+                <p className="text-sm text-success-600">
+                  {product.inventoryCount > 10 
+                    ? 'In stock and ready to ship' 
+                    : product.inventoryCount > 0 
+                      ? `Low stock (${product.inventoryCount} remaining)` 
+                      : 'Out of stock'
+                  }
+                </p>
+                
+                {isAdmin && (
+                  <span className="rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-700">
+                    Inventory: {product.inventoryCount || 0} units
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Description */}

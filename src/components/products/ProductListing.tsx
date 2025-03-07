@@ -1,37 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ShoppingCart, Star, Filter, X, SlidersHorizontal } from 'lucide-react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
-import { useCart } from '../../lib/hooks/useCart';
-import { useAuth } from '../../lib/AuthContext';
 import { Link, useSearchParams } from 'react-router-dom';
+import { ChevronDown, ShoppingCart, Star, Filter, X, SlidersHorizontal } from 'lucide-react';
+import { getProducts } from '../../lib/firestore';
+import { useCart } from '../../lib/hooks/useCart';
 
 interface Product {
   id: string;
+  name: string;
   flavor: string;
-  strength: number;
+  strength: string;
+  count: number;
   price: number;
   originalPrice?: number;
-  rating?: number;
-  reviewCount?: number;
-  imageUrl?: string;
+  rating: number;
+  reviewCount: number;
+  imageUrl: string;
   isNew?: boolean;
-  count?: number;
-  itemPN?: string;
-  category?: string;
-  active?: boolean;
-  inventoryCount?: number;
+  category: string;
 }
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product) => void;
+}
+
+interface FilterSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  flavors: string[];
+  strengths: number[];
+  selectedFilters: {
+    flavors: string[];
+    strengths: number[];
+  };
+  onFilterChange: (filterType: 'flavors' | 'strengths' | 'reset', value?: string | number) => void;
 }
 
 // ProductCard component for individual product display
-const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
+const ProductCard = ({ product }: ProductCardProps) => {
+  const { addToCart } = useCart();
+  
   const handleAddToCart = () => {
-    onAddToCart(product);
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      imageUrl: product.imageUrl,
+      quantity: 1
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -54,10 +69,10 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
       </button>
 
       {/* Product image */}
-      <div className="relative flex h-48 items-center justify-center overflow-hidden bg-surface-100 p-4">
+      <Link to={`/products/${product.id}`} className="relative flex h-48 items-center justify-center overflow-hidden bg-surface-100 p-4">
         <img 
-          src={product.imageUrl || "/images/placeholder-product.jpg"} 
-          alt={product.flavor} 
+          src={product.imageUrl} 
+          alt={product.name} 
           className="h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
         />
         {product.isNew && (
@@ -65,7 +80,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
             NEW
           </span>
         )}
-      </div>
+      </Link>
 
       {/* Product content */}
       <div className="flex flex-1 flex-col justify-between p-4">
@@ -76,18 +91,20 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 <Star 
                   key={i} 
                   size={14} 
-                  fill={i < (product.rating || 5) ? "currentColor" : "none"} 
-                  className={i < (product.rating || 5) ? "text-warning-400" : "text-surface-300"} 
+                  fill={i < product.rating ? "currentColor" : "none"} 
+                  className={i < product.rating ? "text-warning-400" : "text-surface-300"} 
                 />
               ))}
             </div>
-            <span className="ml-1 text-xs text-surface-500">({product.reviewCount || 0})</span>
+            <span className="ml-1 text-xs text-surface-500">({product.reviewCount})</span>
           </div>
 
-          <h3 className="mb-1 font-medium text-surface-900">{product.itemPN || product.flavor}</h3>
+          <Link to={`/products/${product.id}`} className="mb-1 block font-medium text-surface-900 hover:text-primary-600">
+            {product.name}
+          </Link>
           
           <div className="mb-2">
-            <span className="text-xs text-surface-500">{product.strength}mg • {product.count || 20} count</span>
+            <span className="text-xs text-surface-500">{product.strength} • {product.count} count</span>
           </div>
           
           <div className="flex items-baseline gap-2">
@@ -102,7 +119,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           onClick={handleAddToCart}
           onKeyDown={handleKeyDown}
           className="mt-4 flex w-full items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-          aria-label={`Add ${product.flavor} to cart`}
+          aria-label={`Add ${product.name} to cart`}
           tabIndex={0}
         >
           <ShoppingCart size={16} className="mr-2" />
@@ -112,18 +129,6 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
     </div>
   );
 };
-
-interface FilterSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  flavors: string[];
-  strengths: number[];
-  selectedFilters: {
-    flavors: string[];
-    strengths: number[];
-  };
-  onFilterChange: (filterType: 'flavors' | 'strengths' | 'reset', value?: string | number) => void;
-}
 
 // Filter Sidebar component
 const FilterSidebar = ({ isOpen, onClose, flavors, strengths, selectedFilters, onFilterChange }: FilterSidebarProps) => {
@@ -226,60 +231,19 @@ const FilterSidebar = ({ isOpen, onClose, flavors, strengths, selectedFilters, o
   );
 };
 
-const ProductListingPage: React.FC = () => {
+const ProductListing: React.FC = () => {
   const [searchParams] = useSearchParams();
   const category = searchParams.get('category');
   const searchQuery = searchParams.get('search');
   const sortParam = searchParams.get('sort');
   
-  // State for products from Firebase
+  // State
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   
-  // Get auth and cart functionality from hooks
-  const { user } = useAuth();
-  const { addToCart } = useCart();
-  
-  // Check if user is admin or owner
-  const isAdmin = user?.isAdmin || user?.isOwner;
-
-  // Fetch products from Firestore
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const productsRef = collection(db, 'products');
-        const q = query(productsRef, where('active', '==', true));
-        const querySnapshot = await getDocs(q);
-        
-        const productsData = [];
-        querySnapshot.forEach((doc) => {
-          productsData.push({
-            id: doc.id,
-            ...doc.data(),
-            rating: 5, // Default rating
-            reviewCount: Math.floor(Math.random() * 50) + 5, // Random review count for demo
-            count: 20 // Default count per package
-          });
-        });
-        
-        setProducts(productsData);
-        console.log('Fetched products:', productsData);
-      } catch (err) {
-        console.error('Error fetching products:', err);
-        setError('Failed to load products. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
-
   // Filter options
-  const flavors = [...new Set(products.map(p => p.flavor))];
-  const strengths = [...new Set(products.map(p => p.strength))];
+  const flavors = ['Apple Mint', 'Cherry', 'Cola', 'Cool Mint', 'Peppermint', 'Spearmint', 'Watermelon'];
+  const strengths = [6, 12, 16, 22];
 
   // State for filter sidebar on mobile
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -292,6 +256,30 @@ const ProductListingPage: React.FC = () => {
 
   // State for sorting
   const [sortOption, setSortOption] = useState(sortParam || 'best-selling');
+
+  // Fetch products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const productsData = await getProducts();
+        setProducts(productsData as Product[]);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, []);
+
+  // Update sort option when URL changes
+  useEffect(() => {
+    if (sortParam) {
+      setSortOption(sortParam);
+    }
+  }, [sortParam]);
 
   // Handle filter changes
   const handleFilterChange = (filterType: 'flavors' | 'strengths' | 'reset', value?: string | number) => {
@@ -325,28 +313,29 @@ const ProductListingPage: React.FC = () => {
     setSortOption(e.target.value);
   };
 
-  // Handle add to cart
-  const handleAddToCart = (product: Product) => {
-    addToCart({
-      id: product.id,
-      name: product.itemPN || `${product.flavor} ${product.strength}mg`,
-      price: product.price,
-      imageUrl: product.imageUrl,
-      quantity: 1
-    });
-  };
-
-  // Filter products based on selected filters
+  // Filter products based on selected filters and search query
   const filteredProducts = products.filter(product => {
-    // If no flavor filters are selected, show all flavors
+    // Apply category filter if present
+    const categoryMatch = !category || product.category === category;
+    
+    // Apply search filter if present
+    const searchMatch = !searchQuery || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.flavor.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Apply flavor filters
     const flavorMatch = selectedFilters.flavors.length === 0 || 
-      selectedFilters.flavors.includes(product.flavor);
+      selectedFilters.flavors.some(flavor => 
+        product.flavor.toLowerCase().includes(flavor.toLowerCase())
+      );
     
-    // If no strength filters are selected, show all strengths
+    // Apply strength filters
     const strengthMatch = selectedFilters.strengths.length === 0 || 
-      selectedFilters.strengths.includes(product.strength);
+      selectedFilters.strengths.some(strength => 
+        product.strength.includes(strength.toString())
+      );
     
-    return flavorMatch && strengthMatch;
+    return categoryMatch && searchMatch && flavorMatch && strengthMatch;
   });
 
   // Sort products
@@ -365,6 +354,15 @@ const ProductListingPage: React.FC = () => {
         return b.reviewCount - a.reviewCount;
     }
   });
+
+  if (loading) {
+    return (
+      <div className="flex h-48 items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"></div>
+        <span className="ml-3 text-surface-700">Loading products...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface-50">
@@ -389,33 +387,10 @@ const ProductListingPage: React.FC = () => {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Page header & mobile filter button */}
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-surface-900">
-              {category 
-                ? `${category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ')}` 
-                : 'All Products'}
-              {searchQuery && <span className="ml-2 text-lg font-normal">Search results for "{searchQuery}"</span>}
-            </h2>
-            
-            {/* Admin controls */}
-            {isAdmin && (
-              <div className="mt-2 flex items-center gap-2">
-                <Link 
-                  to="/admin/products" 
-                  className="inline-flex items-center rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
-                >
-                  Manage Products
-                </Link>
-                <Link 
-                  to="/admin/inventory" 
-                  className="inline-flex items-center rounded-md border border-surface-300 bg-white px-3 py-1.5 text-sm font-medium text-surface-700 hover:bg-surface-50"
-                >
-                  Inventory
-                </Link>
-              </div>
-            )}
-          </div>
-          
+          <h2 className="text-2xl font-bold tracking-tight text-surface-900">
+            {category ? `${category.charAt(0).toUpperCase() + category.slice(1)}` : 'All Products'}
+            {searchQuery && <span className="ml-2 text-lg font-normal">Search results for "{searchQuery}"</span>}
+          </h2>
           <div className="flex items-center gap-4">
             {/* Mobile filter button */}
             <button
@@ -512,64 +487,19 @@ const ProductListingPage: React.FC = () => {
               </div>
             )}
 
-            {/* Loading state */}
-            {loading && (
-              <div className="flex h-64 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-surface-300 border-t-primary-600"></div>
-                <span className="ml-2 text-surface-600">Loading products...</span>
-              </div>
-            )}
-
-            {/* Error state */}
-            {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Product count */}
-            {!loading && !error && (
-              <p className="mb-6 text-sm text-surface-500">
-                Showing {sortedProducts.length} products
-              </p>
-            )}
+            <p className="mb-6 text-sm text-surface-500">
+              Showing {sortedProducts.length} products
+            </p>
 
             {/* Products grid */}
-            {!loading && !error && sortedProducts.length > 0 ? (
+            {sortedProducts.length > 0 ? (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {sortedProducts.map(product => (
-                  <div key={product.id} className="relative">
-                    {isAdmin && (
-                      <div className="absolute right-2 top-2 z-10 flex gap-1">
-                        <Link 
-                          to={`/admin/products/edit/${product.id}`}
-                          className="rounded-md bg-white/90 p-1.5 text-surface-600 shadow-sm backdrop-blur-sm hover:bg-white hover:text-primary-600"
-                          title="Edit product"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
-                        </Link>
-                        <button 
-                          className="rounded-md bg-white/90 p-1.5 text-surface-600 shadow-sm backdrop-blur-sm hover:bg-white hover:text-red-600"
-                          title="Delete product"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
-                        </button>
-                      </div>
-                    )}
-                    <ProductCard product={product} onAddToCart={handleAddToCart} />
-                  </div>
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
-            ) : !loading && !error ? (
+            ) : (
               <div className="flex flex-col items-center justify-center rounded-lg border border-surface-200 bg-white py-12">
                 <SlidersHorizontal size={48} className="mb-4 text-surface-400" />
                 <h3 className="mb-2 text-lg font-medium text-surface-900">No products found</h3>
@@ -583,7 +513,7 @@ const ProductListingPage: React.FC = () => {
                   Reset Filters
                 </button>
               </div>
-            ) : null}
+            )}
           </div>
         </div>
       </div>
@@ -591,4 +521,4 @@ const ProductListingPage: React.FC = () => {
   );
 };
 
-export default ProductListingPage;
+export default ProductListing;

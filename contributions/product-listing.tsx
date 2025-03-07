@@ -1,13 +1,42 @@
 import React, { useState } from 'react';
 import { ChevronDown, ShoppingCart, Star, Filter, X, SlidersHorizontal } from 'lucide-react';
 
+interface Product {
+  id: number;
+  name: string;
+  strength: string;
+  count: number;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  reviewCount: number;
+  imageUrl?: string;
+  isNew?: boolean;
+}
+
+interface ProductCardProps {
+  product: Product;
+}
+
+interface FilterSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  flavors: string[];
+  strengths: number[];
+  selectedFilters: {
+    flavors: string[];
+    strengths: number[];
+  };
+  onFilterChange: (filterType: 'flavors' | 'strengths' | 'reset', value?: string | number) => void;
+}
+
 // ProductCard component for individual product display
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product }: ProductCardProps) => {
   const handleAddToCart = () => {
     console.log('Added to cart:', product.name);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       handleAddToCart();
     }
@@ -87,7 +116,7 @@ const ProductCard = ({ product }) => {
 };
 
 // Filter Sidebar component
-const FilterSidebar = ({ isOpen, onClose, flavors, strengths, selectedFilters, onFilterChange }) => {
+const FilterSidebar = ({ isOpen, onClose, flavors, strengths, selectedFilters, onFilterChange }: FilterSidebarProps) => {
   return (
     <>
       {/* Mobile overlay */}
@@ -189,7 +218,7 @@ const FilterSidebar = ({ isOpen, onClose, flavors, strengths, selectedFilters, o
 
 const ProductListing = () => {
   // Mock data for products
-  const products = [
+  const products: Product[] = [
     { id: 1, name: 'PUXX Peppermint Strong', strength: '16mg', count: 20, price: 24.99, rating: 5, reviewCount: 42, imageUrl: '/api/placeholder/240/240', isNew: true },
     { id: 2, name: 'PUXX Cherry Strong', strength: '16mg', count: 20, price: 24.99, rating: 4, reviewCount: 18, imageUrl: '/api/placeholder/240/240' },
     { id: 3, name: 'PUXX Cola Strong', strength: '16mg', count: 20, price: 24.99, rating: 4, reviewCount: 27, imageUrl: '/api/placeholder/240/240' },
@@ -209,15 +238,15 @@ const ProductListing = () => {
   
   // State for selected filters
   const [selectedFilters, setSelectedFilters] = useState({
-    flavors: [],
-    strengths: [],
+    flavors: [] as string[],
+    strengths: [] as number[],
   });
 
   // State for sorting
   const [sortOption, setSortOption] = useState('best-selling');
 
   // Handle filter changes
-  const handleFilterChange = (filterType, value) => {
+  const handleFilterChange = (filterType: 'flavors' | 'strengths' | 'reset', value?: string | number) => {
     if (filterType === 'reset') {
       setSelectedFilters({
         flavors: [],
@@ -229,7 +258,7 @@ const ProductListing = () => {
     setSelectedFilters(prev => {
       const currentFilters = [...prev[filterType]];
       
-      if (currentFilters.includes(value)) {
+      if (currentFilters.includes(value as never)) {
         return {
           ...prev,
           [filterType]: currentFilters.filter(item => item !== value)
@@ -244,7 +273,7 @@ const ProductListing = () => {
   };
 
   // Handle sort change
-  const handleSortChange = (e) => {
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSortOption(e.target.value);
   };
 

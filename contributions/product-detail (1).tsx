@@ -1,9 +1,43 @@
 import React, { useState } from 'react';
 import { Star, Minus, Plus, ChevronRight, Truck, Shield, CircleCheck, ShoppingCart, Heart } from 'lucide-react';
 
+interface ProductVariant {
+  strength: number;
+  label: string;
+  inStock: boolean;
+  current?: boolean;
+}
+
+interface RelatedProduct {
+  id: number;
+  name: string;
+  price: number;
+  imageUrl: string;
+  rating: number;
+  reviewCount: number;
+}
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  flavor: string;
+  category?: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  reviewCount: number;
+  strength: number;
+  count: number;
+  features: string[];
+  images: string[];
+  variants: ProductVariant[];
+  relatedProducts: RelatedProduct[];
+}
+
 const ProductDetail = () => {
   // Mock product data
-  const product = {
+  const product: Product = {
     id: 1,
     name: 'PUXX Peppermint Strong',
     description: 'Experience the fresh cooling sensation of premium peppermint with PUXX Strong. These tobacco-free nicotine pouches deliver a powerful and satisfying experience with a clean, refreshing flavor that lasts longer.',
@@ -50,12 +84,12 @@ const ProductDetail = () => {
     console.log('Added to cart:', product.name, 'Quantity:', quantity);
   };
 
-  const handleQuantityChange = (value) => {
+  const handleQuantityChange = (value: number) => {
     const newQuantity = Math.max(1, Math.min(10, quantity + value));
     setQuantity(newQuantity);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       handleAddToCart();
     }
