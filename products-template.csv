@@ -1,0 +1,5 @@
+itemPN,description,flavor,strength,price,wholesalePrice,inventoryCount,category
+"Apple mint","Tobacco Free Nicotine Pouch, 6mg/pouch","Apple mint",6,24.99,18.99,10000,"nicotine-pouches"
+"Apple mint","Tobacco Free Nicotine Pouch, 12mg/pouch","Apple mint",12,26.99,19.99,5000,"nicotine-pouches"
+"Cool mint","Tobacco Free Nicotine Pouch, 6mg/pouch","Cool mint",6,24.99,18.99,10000,"nicotine-pouches"
+"Cool mint","Tobacco Free Nicotine Pouch, 12mg/pouch","Cool mint",12,26.99,19.99,8000,"nicotine-pouches"
