@@ -14,6 +14,7 @@
     "migrate": "node --experimental-json-modules scripts/migrate-to-firebase.js",
     "migrate:init": "node --experimental-json-modules scripts/migrate-and-initialize.js",
     "firebase:init": "node --experimental-json-modules scripts/firebase-init.js",
+    "import:products": "node --experimental-json-modules scripts/import-products.js",
     "create-env": "node scripts/create-env.js",
     "create-sa": "node scripts/create-service-account.js",
     "setup": "npm run create-env && npm run firebase:init",
