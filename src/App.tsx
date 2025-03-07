@@ -5,6 +5,7 @@ import { ThemeProvider } from './components/ThemeProvider';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import { CartProvider } from './lib/hooks/useCart';
 import { initializeDatabase } from './lib/initDb';
+import { ProductProvider } from './contexts/ProductContext';
 
 // Loading fallback
 const PageLoader = () => (
@@ -161,16 +162,19 @@ function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
   const [initError, setInitError] = useState<Error | null>(null);
 
-  // Initialize the database when the app starts - only when explicitly requested
+  // Initialize the database when the app starts
   useEffect(() => {
-    // Start with app ready to use - we'll only initialize DB on demand
+    // First set the app as ready to use to avoid blocking the UI
     setDbInitialized(true);
-
-    // Check if initialization is requested
+    
+    // We'll check for explicit initialization via URL parameter
     const shouldInitDb = new URLSearchParams(window.location.search).has('init-db');
     
-    if (shouldInitDb) {
-      console.log('Database initialization requested via URL parameter');
+    // Also check local storage to see if we've initialized before
+    const hasInitialized = localStorage.getItem('dbInitialized') === 'true';
+    
+    if (shouldInitDb || !hasInitialized) {
+      console.log(`Database initialization ${shouldInitDb ? 'requested via URL parameter' : 'has not been done yet'}`);
       setInitError(null); // Clear any previous errors
       
       // Initialize in a non-blocking way - app is already usable
@@ -179,13 +183,16 @@ function App() {
           console.log('Starting database initialization...');
           await initializeDatabase();
           console.log('Database initialization completed successfully!');
+          
+          // Mark as initialized in local storage
+          localStorage.setItem('dbInitialized', 'true');
         } catch (error) {
           console.error('Error during database initialization:', error);
           setInitError(error instanceof Error ? error : new Error('Failed to initialize database'));
         }
       })();
     } else {
-      console.log('Database initialization not requested. App ready to use with existing data.');
+      console.log('Database already initialized. App ready to use with existing data.');
     }
   }, []);
 
@@ -198,26 +205,28 @@ function App() {
     <ThemeProvider defaultTheme="system">
       <AuthProvider>
         <CartProvider>
-          <Toaster 
-            position="top-right" 
-            closeButton 
-            theme="system"
-            className="toaster-wrapper"
-            toastOptions={{
-              classNames: {
-                toast: "group toast group-[.toaster]:bg-white group-[.toaster]:text-surface-900 group-[.toaster]:border-surface-200 group-[.toaster]:shadow-soft-xl dark:group-[.toaster]:bg-surface-800 dark:group-[.toaster]:text-surface-50 dark:group-[.toaster]:border-surface-700",
-                title: "text-surface-900 dark:text-white text-sm font-medium",
-                description: "text-surface-600 dark:text-surface-300 text-sm",
-                success: "text-success-500"
-              }
-            }}
-          />
-          {initError && (
-            <div className="fixed top-0 left-0 right-0 bg-red-500 text-white text-center p-2 z-50">
-              Database initialization error: {initError.message}
-            </div>
-          )}
-          <RouterProvider router={router} />
+          <ProductProvider>
+            <Toaster 
+              position="top-right" 
+              closeButton 
+              theme="system"
+              className="toaster-wrapper"
+              toastOptions={{
+                classNames: {
+                  toast: "group toast group-[.toaster]:bg-white group-[.toaster]:text-surface-900 group-[.toaster]:border-surface-200 group-[.toaster]:shadow-soft-xl dark:group-[.toaster]:bg-surface-800 dark:group-[.toaster]:text-surface-50 dark:group-[.toaster]:border-surface-700",
+                  title: "text-surface-900 dark:text-white text-sm font-medium",
+                  description: "text-surface-600 dark:text-surface-300 text-sm",
+                  success: "text-success-500"
+                }
+              }}
+            />
+            {initError && (
+              <div className="fixed top-0 left-0 right-0 bg-red-500 text-white text-center p-2 z-50">
+                Database initialization error: {initError.message}
+              </div>
+            )}
+            <RouterProvider router={router} />
+          </ProductProvider>
         </CartProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -105,7 +105,7 @@ function determineRole(isReferrer, isDistributor, isAdmin) {
   return 'retail';
 }
 
-async function migrateData() {
+export async function migrateData() {
   console.log('Starting migration from Supabase to Firestore...');
   const results = {
     success: [],
@@ -159,7 +159,11 @@ async function migrateData() {
   
   // Save summary to file
   fs.writeFileSync('migration-results.json', JSON.stringify(results, null, 2));
+  
+  return results;
 }
 
-// Run the migration
-migrateData().catch(console.error);
+// If this script is run directly, execute the migration
+if (import.meta.url === `file://${process.argv[1]}`) {
+  migrateData().catch(console.error);
+}

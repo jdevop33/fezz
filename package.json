@@ -12,9 +12,11 @@
     "deploy": "bash scripts/deploy.sh",
     "deploy:hosting": "bash scripts/deploy.sh",
     "migrate": "node --experimental-json-modules scripts/migrate-to-firebase.js",
+    "migrate:init": "node --experimental-json-modules scripts/migrate-and-initialize.js",
+    "firebase:init": "node --experimental-json-modules scripts/firebase-init.js",
     "create-env": "node scripts/create-env.js",
     "create-sa": "node scripts/create-service-account.js",
-    "setup": "npm run create-env && npm run create-sa && npm run migrate",
+    "setup": "npm run create-env && npm run firebase:init",
     "package": "npm run build && mkdir -p pouches-deployment && cp -r dist firestore.rules firestore.indexes.json storage.rules firebase.json .firebaserc .env.production pouches-deployment && zip -r pouches-deployment.zip pouches-deployment && echo 'Deployment package created: pouches-deployment.zip'"
   },
   "dependencies": {
@@ -23,6 +25,7 @@
     "@supabase/supabase-js": "^2.39.7",
     "clsx": "^2.1.0",
     "date-fns": "^3.3.1",
+    "dotenv": "^16.4.7",
     "firebase": "^11.4.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
