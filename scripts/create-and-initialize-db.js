@@ -49,10 +49,17 @@ async function createAndInitializeDb() {
     let products = [];
     try {
       const catalogData = await fs.readFile('./catalog-data.json', 'utf-8');
-      products = JSON.parse(catalogData);
+      const jsonData = JSON.parse(catalogData);
+      // Handle both formats: array of products or object with products array
+      products = Array.isArray(jsonData) ? jsonData : jsonData.products;
+      
+      if (!products || !Array.isArray(products)) {
+        throw new Error('JSON file must contain an array of products or an object with a products array');
+      }
+      
       console.log(`Loaded ${products.length} products from catalog-data.json`);
     } catch (error) {
-      console.log('No catalog-data.json found, using default sample products');
+      console.log('No catalog-data.json found or invalid format, using default sample products');
       
       // Use sample products if no catalog data
       products = [

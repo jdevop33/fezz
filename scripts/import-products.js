@@ -47,10 +47,13 @@ async function importProducts() {
     
     // Read and parse the JSON file
     const fileContent = await fs.readFile(jsonFilePath, 'utf-8');
-    const products = JSON.parse(fileContent);
+    const jsonData = JSON.parse(fileContent);
     
-    if (!Array.isArray(products)) {
-      throw new Error('JSON file must contain an array of products');
+    // Handle both formats: array of products or object with products array
+    const products = Array.isArray(jsonData) ? jsonData : jsonData.products;
+    
+    if (!products || !Array.isArray(products)) {
+      throw new Error('JSON file must contain an array of products or an object with a products array');
     }
     
     console.log(`Found ${products.length} products to import`);

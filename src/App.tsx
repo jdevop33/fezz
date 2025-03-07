@@ -47,32 +47,46 @@ const ReportsPage = lazyWithSuspense(() => import('./pages/admin/ReportsPage'));
 
 // Import our real ProtectedRoute component
 import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from './components/Navbar';
+import ProductDetail from './components/products/ProductDetail';
+
+// Layout component to wrap routes with the Navbar
+const MainLayout = ({ children }: { children: React.ReactNode }) => (
+  <>
+    <Navbar />
+    {children}
+  </>
+);
 
 // Create router with future flags enabled
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <LandingPage />
+    element: <MainLayout><LandingPage /></MainLayout>
   },
   {
     path: "/login",
-    element: <LoginPage />
+    element: <MainLayout><LoginPage /></MainLayout>
   },
   {
     path: "/signup",
-    element: <SignupPage />
+    element: <MainLayout><SignupPage /></MainLayout>
   },
   {
     path: "/setup",
-    element: <SetupPage />
+    element: <MainLayout><SetupPage /></MainLayout>
   },
   {
     path: "/products",
-    element: <ProductsPage />
+    element: <MainLayout><ProductsPage /></MainLayout>
+  },
+  {
+    path: "/products/:productId",
+    element: <MainLayout><ProductDetail /></MainLayout>
   },
   {
     path: "/dashboard",
-    element: <ProtectedRoute><DashboardPage /></ProtectedRoute>
+    element: <ProtectedRoute><MainLayout><DashboardPage /></MainLayout></ProtectedRoute>
   },
   {
     path: "/admin",
@@ -118,7 +132,7 @@ const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <NotFoundPage />
+    element: <MainLayout><NotFoundPage /></MainLayout>
   }
 ], {
   future: {
