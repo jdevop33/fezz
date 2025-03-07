@@ -28,15 +28,18 @@ jobs:
           echo "VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" >> .env
           echo "VITE_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
         
-      - name: Initialize Firebase Database
-        run: npm run firebase:init
-        
       - name: Build
         run: npm run build
       
       - name: Create Service Account File
         run: |
           echo '${{ secrets.GCP_SA_KEY }}' > ${{ github.workspace }}/serviceAccount.json
+        
+      # Skip Firebase initialization during deployment - will be handled by the app on first run
+      - name: Skip Firebase Initialization
+        run: |
+          echo "Skipping Firebase initialization during deployment"
+          echo "Database will be initialized automatically when the app runs for the first time"
         
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0

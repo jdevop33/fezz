@@ -31,6 +31,13 @@ console.log('Firebase configuration:', {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// Log debug information
+console.log(`Connecting to Firestore in project: ${firebaseConfig.projectId}`);
+console.log(`If you experience "NOT_FOUND" errors, please check that:`);
+console.log(` - The Firestore database has been created in project ${firebaseConfig.projectId}`);
+console.log(` - The service account has proper permissions`);
+console.log(` - The project ID in your .env file matches your Firebase project`);
 const auth = getAuth(app);
 
 // Define sample data
