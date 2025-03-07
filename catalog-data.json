@@ -1,0 +1,98 @@
+[
+  {
+    "itemPN": "PUXX-PEPPERMINT-16",
+    "description": "Premium Tobacco-Free Nicotine Pouch, 16mg/pouch",
+    "strength": 16,
+    "flavor": "Peppermint",
+    "price": 24.99,
+    "wholesalePrice": 18.99,
+    "inventoryCount": 1000,
+    "category": "nicotine-pouches",
+    "imageUrl": "/images/products/peppermint-16mg.jpg",
+    "active": true
+  },
+  {
+    "itemPN": "PUXX-CHERRY-16",
+    "description": "Premium Tobacco-Free Nicotine Pouch, 16mg/pouch",
+    "strength": 16,
+    "flavor": "Cherry",
+    "price": 24.99,
+    "wholesalePrice": 18.99,
+    "inventoryCount": 1000,
+    "category": "nicotine-pouches",
+    "imageUrl": "/images/products/cherry-16mg.jpg",
+    "active": true
+  },
+  {
+    "itemPN": "PUXX-COLA-16",
+    "description": "Premium Tobacco-Free Nicotine Pouch, 16mg/pouch",
+    "strength": 16,
+    "flavor": "Cola",
+    "price": 24.99,
+    "wholesalePrice": 18.99,
+    "inventoryCount": 1000,
+    "category": "nicotine-pouches",
+    "imageUrl": "/images/products/cola-16mg.jpg",
+    "active": true
+  },
+  {
+    "itemPN": "PUXX-APPLE-MINT-16",
+    "description": "Premium Tobacco-Free Nicotine Pouch, 16mg/pouch",
+    "strength": 16,
+    "flavor": "Apple Mint",
+    "price": 24.99,
+    "wholesalePrice": 18.99,
+    "inventoryCount": 1000,
+    "category": "nicotine-pouches",
+    "imageUrl": "/images/products/apple-mint-16mg.jpg",
+    "active": true
+  },
+  {
+    "itemPN": "PUXX-COOL-MINT-16",
+    "description": "Premium Tobacco-Free Nicotine Pouch, 16mg/pouch",
+    "strength": 16,
+    "flavor": "Cool Mint",
+    "price": 24.99,
+    "wholesalePrice": 18.99,
+    "inventoryCount": 1000,
+    "category": "nicotine-pouches",
+    "imageUrl": "/images/products/cool-mint-16mg.jpg",
+    "active": true
+  },
+  {
+    "itemPN": "PUXX-SPEARMINT-16",
+    "description": "Premium Tobacco-Free Nicotine Pouch, 16mg/pouch",
+    "strength": 16,
+    "flavor": "Spearmint",
+    "price": 24.99,
+    "wholesalePrice": 18.99,
+    "inventoryCount": 1000,
+    "category": "nicotine-pouches",
+    "imageUrl": "/images/products/spearmint-16mg.jpg",
+    "active": true
+  },
+  {
+    "itemPN": "PUXX-WATERMELON-16",
+    "description": "Premium Tobacco-Free Nicotine Pouch, 16mg/pouch",
+    "strength": 16,
+    "flavor": "Watermelon",
+    "price": 24.99,
+    "wholesalePrice": 18.99,
+    "inventoryCount": 1000,
+    "category": "nicotine-pouches",
+    "imageUrl": "/images/products/watermelon-16mg.jpg",
+    "active": true
+  },
+  {
+    "itemPN": "PUXX-APPLE-MINT-22",
+    "description": "Premium Tobacco-Free Nicotine Pouch, Extra Strong, 22mg/pouch",
+    "strength": 22,
+    "flavor": "Apple Mint",
+    "price": 29.99,
+    "wholesalePrice": 23.99,
+    "inventoryCount": 1000,
+    "category": "nicotine-pouches",
+    "imageUrl": "/images/products/apple-mint-22mg.jpg",
+    "active": true
+  }
+]
