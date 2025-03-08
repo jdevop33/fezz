@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useCart } from '../../lib/hooks';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
+import { ShoppingCart as CartIcon, X, Trash2, Plus, Minus, ChevronRight } from 'lucide-react';
 
 interface ShoppingCartProps {
   isOpen: boolean;
@@ -9,9 +10,64 @@ interface ShoppingCartProps {
 }
 
 const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose }) => {
-  const { items, removeItem, updateQuantity, clearCart, subtotal, itemCount } = useCart();
+  const { 
+    items, 
+    removeItem, 
+    updateQuantity, 
+    clearCart, 
+    subtotal, 
+    retailTotal,
+    savings,
+    itemCount 
+  } = useCart();
+  
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const cartRef = useRef<HTMLDivElement>(null);
+  
+  // Handle closing the cart when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cartRef.current && !cartRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+  
+  // Handle escape key press
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('keydown', handleEsc);
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [isOpen, onClose]);
+  
+  // When the cart is opened, focus on the first focusable element
+  useEffect(() => {
+    if (isOpen && cartRef.current) {
+      const firstFocusable = cartRef.current.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])') as HTMLElement;
+      if (firstFocusable) {
+        setTimeout(() => firstFocusable.focus(), 100);
+      }
+    }
+  }, [isOpen]);
   
   const handleCheckout = () => {
     if (!currentUser) {
@@ -28,44 +84,57 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose }) => {
   // If the cart is not open, render nothing
   if (!isOpen) return null;
   
+  // Check if user is wholesale
+  const isWholesale = currentUser?.role === 'wholesale' || currentUser?.role === 'distributor';
+  
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+      {/* Backdrop with animation */}
       <div 
-        className="absolute inset-0 bg-black/50" 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300" 
         onClick={onClose}
         aria-hidden="true"
       />
       
-      {/* Cart panel */}
-      <div className="absolute inset-y-0 right-0 w-full max-w-md bg-white dark:bg-gray-800 shadow-xl flex flex-col">
+      {/* Cart panel with animation */}
+      <div 
+        ref={cartRef}
+        className="absolute inset-y-0 right-0 w-full max-w-md bg-white dark:bg-gray-800 shadow-xl flex flex-col transform transition-transform duration-300 ease-in-out"
+        style={{ maxHeight: '100vh' }}
+      >
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h2 className="text-xl font-bold">Shopping Cart ({itemCount})</h2>
+          <h2 id="cart-title" className="text-xl font-bold flex items-center gap-2">
+            <CartIcon size={20} className="text-primary-600" /> 
+            Shopping Cart ({itemCount})
+          </h2>
           <button 
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="p-2 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
             onClick={onClose}
             aria-label="Close cart"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X size={20} />
           </button>
         </div>
         
         {/* Cart items */}
-        <div className="flex-grow overflow-y-auto p-4">
+        <div className="flex-grow overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
           {items.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">Your cart is empty</p>
+            <div className="text-center py-12 px-4">
+              <div className="mx-auto w-16 h-16 mb-4 text-gray-300 dark:text-gray-600">
+                <CartIcon size={64} />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Your cart is empty</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">Looks like you haven't added any products to your cart yet.</p>
               <button 
-                className="mt-4 text-blue-600 hover:underline"
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 onClick={() => {
                   onClose();
                   navigate('/products');
                 }}
               >
                 Continue Shopping
+                <ChevronRight size={16} className="ml-1" />
               </button>
             </div>
           ) : (
@@ -74,48 +143,67 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose }) => {
                 <li key={item.productId} className="border-b border-gray-200 dark:border-gray-700 pb-4">
                   <div className="flex gap-4">
                     {/* Product image */}
-                    <div className="w-20 h-20 bg-gray-200 rounded">
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-md overflow-hidden flex-shrink-0">
                       <img 
                         src={item.product.imageUrl || '/images/placeholder.png'} 
                         alt={item.product.flavor}
-                        className="w-full h-full object-cover rounded"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/images/placeholder.png';
+                        }}
                       />
                     </div>
                     
                     {/* Product info */}
                     <div className="flex-grow">
                       <div className="flex justify-between">
-                        <h3 className="font-medium">{item.product.flavor}</h3>
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                          {item.product.itemPN || item.product.flavor}
+                        </h3>
                         <button 
-                          className="text-red-500 hover:text-red-700"
+                          className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full"
                           onClick={() => removeItem(item.productId)}
                           aria-label={`Remove ${item.product.flavor} from cart`}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <Trash2 size={16} />
                         </button>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.product.strength}mg</p>
+                      
+                      <div className="flex flex-col gap-1 text-sm text-gray-600 dark:text-gray-400">
+                        <p>{item.product.flavor} • {item.product.strength}mg</p>
+                        
+                        {/* Show both retail and wholesale prices for wholesale users */}
+                        {isWholesale && item.product.wholesalePrice && (
+                          <div className="flex gap-2 items-center">
+                            <span className="text-primary-600 font-medium">${item.product.wholesalePrice.toFixed(2)}</span>
+                            <span className="line-through text-xs">${item.product.price.toFixed(2)}</span>
+                          </div>
+                        )}
+                      </div>
+                      
                       <div className="mt-2 flex justify-between items-center">
-                        <div className="flex items-center border rounded">
+                        <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
                           <button 
-                            className="px-2 py-1 border-r"
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary-500"
                             onClick={() => updateQuantity(item.productId, item.quantity - 1)}
                             disabled={item.quantity <= 1}
+                            aria-label="Decrease quantity"
                           >
-                            -
+                            <Minus size={16} />
                           </button>
-                          <span className="px-3">{item.quantity}</span>
+                          <span className="px-3 py-1 min-w-[2rem] text-center">{item.quantity}</span>
                           <button 
-                            className="px-2 py-1 border-l"
+                            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 focus:outline-none focus:ring-1 focus:ring-inset focus:ring-primary-500"
                             onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            aria-label="Increase quantity"
                           >
-                            +
+                            <Plus size={16} />
                           </button>
                         </div>
-                        <div className="font-bold">
-                          ${(item.product.price * item.quantity).toFixed(2)}
+                        
+                        <div className="font-bold text-gray-900 dark:text-gray-100">
+                          ${((isWholesale && item.product.wholesalePrice ? item.product.wholesalePrice : item.product.price) * item.quantity).toFixed(2)}
                         </div>
                       </div>
                     </div>
@@ -128,31 +216,62 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose }) => {
         
         {/* Footer */}
         {items.length > 0 && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between mb-4">
-              <button 
-                className="text-red-500 hover:text-red-700 text-sm"
-                onClick={clearCart}
-              >
-                Clear Cart
-              </button>
-              <div>
-                <div className="text-gray-600 dark:text-gray-400">Subtotal:</div>
-                <div className="text-xl font-bold">${subtotal.toFixed(2)}</div>
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-b-lg">
+            {/* Show savings for wholesale users */}
+            {isWholesale && savings > 0 && (
+              <div className="mb-2 bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
+                <p className="text-green-700 dark:text-green-400 text-sm font-medium">
+                  Wholesale savings: ${savings.toFixed(2)}
+                </p>
+              </div>
+            )}
+            
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
+                <span className="font-medium">${subtotal.toFixed(2)}</span>
+              </div>
+              
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-400">Shipping</span>
+                <span className="font-medium">Calculated at checkout</span>
+              </div>
+              
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2 flex justify-between">
+                <span className="font-medium text-gray-800 dark:text-gray-200">Total</span>
+                <span className="text-xl font-bold text-gray-900 dark:text-gray-100">${subtotal.toFixed(2)}</span>
               </div>
             </div>
-            <button 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium"
-              onClick={handleCheckout}
-            >
-              Checkout
-            </button>
-            <button 
-              className="w-full mt-2 border border-gray-300 dark:border-gray-600 py-3 rounded-lg"
-              onClick={onClose}
-            >
-              Continue Shopping
-            </button>
+            
+            <div className="flex justify-between mb-4">
+              <button 
+                className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:underline focus:outline-none focus:ring-2 focus:ring-red-500 rounded-md"
+                onClick={clearCart}
+                aria-label="Clear all items in cart"
+              >
+                <div className="flex items-center gap-1">
+                  <Trash2 size={14} />
+                  <span>Clear Cart</span>
+                </div>
+              </button>
+            </div>
+            
+            <div className="space-y-2">
+              <button 
+                className="w-full flex justify-center items-center bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-md font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                onClick={handleCheckout}
+              >
+                Proceed to Checkout
+                <ChevronRight size={16} className="ml-1" />
+              </button>
+              
+              <button 
+                className="w-full flex justify-center items-center border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                onClick={onClose}
+              >
+                Continue Shopping
+              </button>
+            </div>
           </div>
         )}
       </div>

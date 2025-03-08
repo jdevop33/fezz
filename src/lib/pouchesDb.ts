@@ -1,7 +1,6 @@
 import { 
   where, 
-  orderBy, 
-  Timestamp, 
+  orderBy,  
   QueryConstraint, 
   serverTimestamp 
 } from 'firebase/firestore';
@@ -15,6 +14,15 @@ import {
   listenToDocument,
   listenToQuery
 } from './firestore';
+import {
+  Product,
+  User,
+  Order,
+  OrderItem,
+  Address,
+  Transaction,
+  Commission
+} from './types';
 
 // Re-export these functions so they can be used by other modules
 export {
@@ -25,105 +33,16 @@ export {
   createDocument
 };
 
-// Base interface for firestore documents
-export interface BaseDocument {
-  id: string;
-  createdAt?: Timestamp;
-  updatedAt?: Timestamp;
-}
-
-// Product Interface
-export interface Product extends BaseDocument {
-  itemPN: string;
-  description: string;
-  strength: number;
-  flavor: string;
-  price: number;
-  wholesalePrice: number;
-  inventoryCount: number;
-  category: string;
-  imageUrl: string;
-  active: boolean;
-}
-
-// User Interface
-export interface User extends BaseDocument {
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  displayName?: string;
-  photoURL?: string;
-  role?: 'retail' | 'wholesale' | 'distributor' | 'admin' | 'owner';
-  approved?: boolean;
-  referrerId?: string;
-  commissionRate?: number;
-  createdOrders?: string[];
-  companyName?: string;
-  accountType?: 'referrer' | 'distributor' | 'both';
-  phone?: string;
-  businessDescription?: string;
-  status?: string;
-  isAdmin?: boolean;
-  isOwner?: boolean;
-}
-
-// Order Interface
-export interface Order extends BaseDocument {
-  userId: string;
-  items: OrderItem[];
-  subtotal: number;
-  tax: number;
-  shipping: number;
-  total: number;
-  status: 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentMethod: 'crypto' | 'bank' | 'highRisk';
-  paymentId?: string;
-  shippingAddress: Address;
-  distributorId?: string;
-  wholesalerId?: string;
-  trackingNumber?: string;
-}
-
-// Order Item Interface
-export interface OrderItem {
-  productId: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
-
-// Address Interface
-export interface Address {
-  name: string;
-  street: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  phone: string;
-}
-
-// Transaction Interface
-export interface Transaction extends BaseDocument {
-  orderId: string;
-  userId: string;
-  amount: number;
-  paymentMethod: 'crypto' | 'bank' | 'highRisk';
-  status: 'pending' | 'completed' | 'failed';
-  transactionId?: string;
-  notes?: string;
-}
-
-// Commission Interface
-export interface Commission extends BaseDocument {
-  userId: string;
-  orderId: string;
-  amount: number;
-  status: 'pending' | 'paid';
-  paidAt?: Timestamp;
-  paymentId?: string;
-}
+// Re-export types
+export {
+  Product,
+  User,
+  Order,
+  OrderItem,
+  Address,
+  Transaction,
+  Commission
+};
 
 // Collection Names
 export const COLLECTIONS = {
