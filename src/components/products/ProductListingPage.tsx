@@ -289,15 +289,15 @@ const FilterSidebar = ({ isOpen, onClose, flavors, strengths, selectedFilters, o
 
 const ProductListingPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Used for cart checkout and navigation
   const category = searchParams.get('category');
   const searchQuery = searchParams.get('search');
   const sortParam = searchParams.get('sort');
   
   // Get auth and cart functionality from hooks
   const { currentUser } = useAuth();
-  const { addToCart, isItemInCart } = useCart();
-  const { filterProducts, products: allProducts, loading: globalLoading, error: globalError } = useProducts();
+  const { addToCart } = useCart();
+  const { filterProducts, products: allProducts } = useProducts();
   
   // Check if user is admin or owner
   const isAdmin = currentUser?.isAdmin || currentUser?.isOwner;
@@ -317,11 +317,11 @@ const ProductListingPage: React.FC = () => {
     strengths: [],
     category: category || undefined,
     searchQuery: searchQuery || undefined,
-    sortBy: (sortParam as any) || 'best-selling'
+    sortBy: (sortParam as 'price-asc' | 'price-desc' | 'newest' | 'best-selling') || 'best-selling'
   });
 
   // State for sorting
-  const [sortOption, setSortOption] = useState(sortParam || 'best-selling');
+  const [sortOption, setSortOption] = useState<string>(sortParam || 'best-selling');
 
   // Extract unique filter options from all products
   const flavors = [...new Set(allProducts.map(p => p.flavor))];

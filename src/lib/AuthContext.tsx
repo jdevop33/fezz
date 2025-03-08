@@ -32,6 +32,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/**
+ * Hook to access authentication context
+ * @returns AuthContextType
+ */
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

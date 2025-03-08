@@ -62,6 +62,10 @@ export function ThemeProvider({
   );
 }
 
+// Move this to a separate file (useTheme.ts) to avoid React Fast Refresh warnings
+/**
+ * Hook to access theme context
+ */
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
   

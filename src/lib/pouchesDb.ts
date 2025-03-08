@@ -1,8 +1,7 @@
 import { 
   where, 
   orderBy,  
-  QueryConstraint, 
-  serverTimestamp 
+  QueryConstraint
 } from 'firebase/firestore';
 import { 
   createDocument, 

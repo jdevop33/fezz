@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getAllProducts, Product, listenToQuery, where, orderBy } from '../lib/pouchesDb';
+import { getAllProducts, Product, where, orderBy } from '../lib/pouchesDb';
 import { db } from '../lib/firebase';
 import { collection, query, getDocs, QueryConstraint } from 'firebase/firestore';
 
@@ -28,6 +28,11 @@ export interface ProductFilters {
 
 const ProductContext = createContext<ProductContextType | null>(null);
 
+// Create hook outside of component to avoid React refresh warnings
+/**
+ * Hook to access product context
+ * @returns ProductContextType
+ */
 export const useProducts = () => {
   const context = useContext(ProductContext);
   if (!context) {
@@ -125,7 +130,8 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     maxPrice,
     searchQuery,
     sortBy = 'newest',
-    limit = 50
+    // limit parameter can be used for pagination in the future
+    limit: _limit = 50
   }: ProductFilters): Promise<Product[]> => {
     try {
       const constraints: QueryConstraint[] = [

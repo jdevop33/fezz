@@ -16,10 +16,7 @@ import {
   QueryConstraint,
   Timestamp,
   onSnapshot,
-  DocumentReference,
-  DocumentSnapshot,
-  QuerySnapshot,
-  Query
+  DocumentReference
 } from 'firebase/firestore';
 import { db } from './firebase';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { X } from 'lucide-react';
+// Import X but use it later when implementing close functionality
 
 interface ProductFormData {
   name: string;

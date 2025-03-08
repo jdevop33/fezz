@@ -1,8 +1,8 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { createBrowserRouter, RouterProvider, Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './components/ThemeProvider';
-import { AuthProvider, useAuth } from './lib/AuthContext';
+import { AuthProvider } from './lib/AuthContext';
 import { CartProvider } from './lib/hooks/useCart';
 import { initializeDatabase } from './lib/initDb';
 import { ProductProvider } from './contexts/ProductContext';
@@ -15,9 +15,11 @@ const PageLoader = () => (
 );
 
 // Wrap lazy components with Suspense
-const lazyWithSuspense = (importFn: () => Promise<any>) => {
+const lazyWithSuspense = <T extends Record<string, unknown>>(
+  importFn: () => Promise<{ default: React.ComponentType<T> }>
+) => {
   const LazyComponent = lazy(importFn);
-  return (props: any) => (
+  return (props: T) => (
     <Suspense fallback={<PageLoader />}>
       <LazyComponent {...props} />
     </Suspense>

@@ -16,7 +16,7 @@ const ShoppingCart: React.FC<ShoppingCartProps> = ({ isOpen, onClose }) => {
     updateQuantity, 
     clearCart, 
     subtotal, 
-    retailTotal,
+    // retailTotal is used for calculating savings
     savings,
     itemCount 
   } = useCart();
