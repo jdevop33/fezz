@@ -251,7 +251,7 @@ const ReportsPage = () => {
             <div className="flex items-center space-x-3 mt-4 sm:mt-0">
               <select
                 value={dateRange}
-                onChange={(e) => setDateRange(e.target.value as any)}
+                onChange={(e) => setDateRange(e.target.value as 'week' | 'month' | 'quarter' | 'year')}
                 className="input text-sm"
               >
                 <option value="week">This Week</option>

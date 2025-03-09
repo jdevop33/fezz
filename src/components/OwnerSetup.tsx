@@ -27,9 +27,9 @@ function OwnerSetup({ onSetupComplete }: OwnerSetupProps) {
       await createInitialOwner(email, password);
       toast.success('Owner account created successfully!');
       onSetupComplete();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Owner setup error:', err);
-      setError(err.message || 'Failed to create owner account');
+      setError(err instanceof Error ? err.message : 'Failed to create owner account');
       toast.error('Failed to create owner account');
     } finally {
       setLoading(false);

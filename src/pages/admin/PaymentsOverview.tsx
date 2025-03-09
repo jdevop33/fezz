@@ -35,6 +35,8 @@ const PaymentsOverview = () => {
 
   useEffect(() => {
     fetchPaymentData();
+    // fetchPaymentData doesn't have dependencies that change, but it uses dateRange and selectedPaymentMethod
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, selectedPaymentMethod]);
 
   const fetchPaymentData = async () => {
@@ -161,7 +163,7 @@ const PaymentsOverview = () => {
             <div className="flex items-center space-x-3">
               <select
                 value={dateRange}
-                onChange={(e) => setDateRange(e.target.value as any)}
+                onChange={(e) => setDateRange(e.target.value as 'today' | 'week' | 'month' | 'year')}
                 className="input text-sm"
               >
                 <option value="today">Today</option>

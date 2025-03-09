@@ -79,6 +79,8 @@ export interface Address {
   phone: string;
 }
 
+// Exporting types isn't necessary here as we're using export interface directly
+
 // Order Interface
 export interface Order extends BaseDocument {
   userId: string;

@@ -77,9 +77,9 @@ function SignupPage() {
       
       toast.success('Account created successfully! Please wait for admin approval.');
       navigate('/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Signup error:', err);
-      setError(err.message || 'Failed to create account');
+      setError(err instanceof Error ? err.message : 'Failed to create account');
       toast.error('Failed to create account');
     } finally {
       setLoading(false);

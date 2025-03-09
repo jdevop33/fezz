@@ -13,14 +13,15 @@ import {
   listenToDocument,
   listenToQuery
 } from './firestore';
-import {
-  Product,
-  User,
-  Order,
-  OrderItem,
-  Address,
-  Transaction,
-  Commission
+// Import types from the central types file
+import type { 
+  Product, 
+  User, 
+  Order, 
+  OrderItem, 
+  Address, 
+  Transaction, 
+  Commission 
 } from './types';
 
 // Re-export these functions so they can be used by other modules
@@ -33,14 +34,14 @@ export {
 };
 
 // Re-export types
-export {
-  Product,
-  User,
-  Order,
-  OrderItem,
-  Address,
-  Transaction,
-  Commission
+export type { 
+  Product, 
+  User, 
+  Order, 
+  OrderItem, 
+  Address, 
+  Transaction, 
+  Commission 
 };
 
 // Collection Names

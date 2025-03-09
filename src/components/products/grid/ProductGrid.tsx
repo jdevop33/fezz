@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useProducts } from '../../../lib/hooks';
 import { useCart } from '../../../lib/hooks/useCart';
 import { useAuth } from '../../../lib/AuthContext';
-import { Package, Filter, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { Package, Filter, ShoppingCart } from 'lucide-react';
 
 const ProductGrid: React.FC = () => {
   const { products, loading, error } = useProducts();
@@ -25,8 +25,13 @@ const ProductGrid: React.FC = () => {
     return true;
   });
   
-  const handleAddToCart = (product: any) => {
-    addToCart(product, 1);
+  const handleAddToCart = (product: {
+    id: string;
+    itemPN: string;
+    price: number;
+    imageUrl?: string;
+  }) => {
+    addToCart(product);
   };
   
   if (loading) {

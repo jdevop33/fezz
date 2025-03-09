@@ -1,14 +1,26 @@
-import React, { Fragment, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import ProductForm from './ProductForm';
+
+// Define a proper type for the form data
+interface ProductFormData {
+  name: string;
+  description: string;
+  category_id: string;
+  price: number;
+  inventory_count: number;
+  sku: string;
+  image_url: string;
+  is_active: boolean;
+}
 
 interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  initialData?: any;
+  initialData?: Partial<ProductFormData>;
   categories: Array<{ id: string; name: string }>;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: ProductFormData) => void;
 }
 
 function ProductModal({ isOpen, onClose, title, initialData, categories, onSubmit }: ProductModalProps) {

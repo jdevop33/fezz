@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getAllProducts, Product, where, orderBy } from '../lib/pouchesDb';
+import { getAllProducts, Product } from '../lib/pouchesDb';
 import { db } from '../lib/firebase';
-import { collection, query, getDocs, QueryConstraint } from 'firebase/firestore';
+import { collection, query, getDocs, QueryConstraint, where, orderBy } from 'firebase/firestore';
 
 interface ProductContextType {
   products: Product[];
@@ -130,8 +130,9 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     maxPrice,
     searchQuery,
     sortBy = 'newest',
-    // limit parameter can be used for pagination in the future
-    limit: _limit = 50
+    // limit parameter is reserved for future pagination features
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    limit = 50
   }: ProductFilters): Promise<Product[]> => {
     try {
       const constraints: QueryConstraint[] = [

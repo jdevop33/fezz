@@ -24,7 +24,8 @@ const ownerNavigation = [
 function AdminDashboard() {
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Loading state used for conditionally rendering content when data is ready
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -35,11 +36,11 @@ function AdminDashboard() {
         } catch (error) {
           console.error('Error fetching user data:', error);
         } finally {
-          setLoading(false);
+          setIsLoading(false);
         }
       } else {
         setCurrentUser(null);
-        setLoading(false);
+        setIsLoading(false);
       }
     });
 
@@ -52,6 +53,15 @@ function AdminDashboard() {
   // Only add owner-specific navigation if user is an owner
   if (currentUser?.isOwner) {
     navigationItems.push(...ownerNavigation);
+  }
+
+  // Show loading indicator while data is being fetched
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-50 dark:bg-surface-900">
+        <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
+      </div>
+    );
   }
 
   return (

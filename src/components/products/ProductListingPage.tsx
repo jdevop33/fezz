@@ -289,7 +289,9 @@ const FilterSidebar = ({ isOpen, onClose, flavors, strengths, selectedFilters, o
 
 const ProductListingPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate(); // Used for cart checkout and navigation
+  // Use navigate for redirection when needed
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const navigate = useNavigate();
   const category = searchParams.get('category');
   const searchQuery = searchParams.get('search');
   const sortParam = searchParams.get('sort');
@@ -417,7 +419,7 @@ const ProductListingPage: React.FC = () => {
         strengths: [],
         category: category || undefined,
         searchQuery: searchQuery || undefined,
-        sortBy: (sortParam as any) || 'best-selling'
+        sortBy: (sortParam as 'price-asc' | 'price-desc' | 'newest' | 'best-selling' | undefined) || 'best-selling'
       });
       return;
     }

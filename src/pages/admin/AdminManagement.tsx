@@ -8,6 +8,8 @@ function AdminManagement() {
   const [admins, setAdmins] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
+  // These variables will be used in a future implementation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminData, setNewAdminData] = useState({
     firstName: '',

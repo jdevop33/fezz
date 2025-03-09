@@ -28,9 +28,9 @@ function LoginPage() {
       await login(email, password);
       toast.success('Logged in successfully');
       navigate('/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err.message || 'Failed to log in');
+      setError(err instanceof Error ? err.message : 'Failed to log in');
       toast.error('Failed to log in');
     } finally {
       setLoading(false);
@@ -45,9 +45,9 @@ function LoginPage() {
       await loginWithGoogle();
       toast.success('Logged in with Google successfully');
       navigate('/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Google login error:', err);
-      setError(err.message || 'Failed to log in with Google');
+      setError(err instanceof Error ? err.message : 'Failed to log in with Google');
       toast.error('Failed to log in with Google');
     } finally {
       setLoading(false);

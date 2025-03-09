@@ -2,7 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Building2, Users, TrendingUp, ShieldCheck, Truck, BarChart3, 
-  CheckCircle2, ArrowRight, ChevronDown, Sparkles, Dumbbell
+  CheckCircle2, ArrowRight, Sparkles, Dumbbell
+  // ChevronDown is imported but not used - removed to fix linting error
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import { ThemeToggle } from '../components/ThemeToggle';

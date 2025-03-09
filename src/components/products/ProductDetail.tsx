@@ -36,12 +36,15 @@ interface RelatedProduct {
   inventoryCount?: number;
 }
 
+// Interface for product variants - uncomment when needed
+/*
 interface ProductVariant {
   strength: number;
   label: string;
   inStock: boolean;
   current?: boolean;
 }
+*/
 
 const ProductDetail = () => {
   const { productId } = useParams<{ productId: string }>();
