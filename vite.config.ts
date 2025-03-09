@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     splitVendorChunkPlugin()
   ],
+  server: {
+    open: true
+  },
   build: {
     // Generate sourcemaps for production build
     sourcemap: false,

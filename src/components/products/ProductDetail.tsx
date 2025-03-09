@@ -6,23 +6,21 @@ import { toast } from 'sonner';
 import { db } from '../../lib/firebase';
 import { useCart } from '../../lib/hooks';
 import { useAuth } from '../../lib/hooks';
+import { getUser } from '../../lib/pouchesDb';
 
-interface Product {
+// Import the actual Product type from types.ts
+import type { Product as ProductType } from '../../lib/types';
+
+// Extend the imported type to add any UI-specific properties
+interface Product extends Partial<ProductType> {
   id: string;
   flavor: string;
   strength: number;
   price: number;
+  // UI specific fields that might not be in the database
   originalPrice?: number;
-  rating?: number;
-  reviewCount?: number;
-  imageUrl?: string;
   isNew?: boolean;
-  count?: number;
-  itemPN?: string;
-  category?: string;
-  active?: boolean;
-  inventoryCount?: number;
-  description?: string;
+  wholesalePrice?: number;
 }
 
 interface RelatedProduct {
@@ -53,8 +51,27 @@ const ProductDetail = () => {
   const { addToCart, updateQuantity } = useCart();
   const { currentUser } = useAuth();
   
-  // Check if user is admin or owner based on role
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'owner';
+  // State
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Check if user is admin or owner
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (currentUser) {
+        try {
+          const userDoc = await getUser(currentUser.uid);
+          setIsAdmin(userDoc?.isAdmin === true || userDoc?.isOwner === true);
+        } catch (error) {
+          console.error('Error checking admin status:', error);
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    
+    checkAdminStatus();
+  }, [currentUser]);
 
   // State
   const [product, setProduct] = useState<Product | null>(null);

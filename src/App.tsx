@@ -51,6 +51,7 @@ const ReportsPage = lazyWithSuspense(() => import('./pages/admin/ReportsPage'));
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import ProductDetail from './components/products/ProductDetail';
+import DebugComponentPath from './components/DebugComponentPath';
 
 // Layout component to wrap routes with the Navbar
 const MainLayout = ({ children }: { children: React.ReactNode }) => (
@@ -221,6 +222,8 @@ function App() {
               </div>
             )}
             <RouterProvider router={router} />
+            {/* Debug component to help see which component is rendering */}
+            {import.meta.env.DEV && <DebugComponentPath />}
           </ProductProvider>
         </CartProvider>
       </AuthProvider>
