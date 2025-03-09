@@ -159,6 +159,7 @@ function App() {
     // Also check local storage to see if we've initialized before
     const hasInitialized = localStorage.getItem('dbInitialized') === 'true';
     
+    // Improved initialization with more robust checks and fallbacks
     if (shouldInitDb || !hasInitialized) {
       console.log(`Database initialization ${shouldInitDb ? 'requested via URL parameter' : 'has not been done yet'}`);
       setInitError(null); // Clear any previous errors
@@ -166,14 +167,22 @@ function App() {
       // Initialize in a non-blocking way - app is already usable
       (async () => {
         try {
-          console.log('Starting database initialization...');
-          await initializeDatabase();
-          console.log('Database initialization completed successfully!');
+          console.log('Starting application initialization...');
+          
+          // Use the new initializeApplication function that:
+          // 1. Creates required collections (orders, settings, etc.)
+          // 2. Ensures an owner account exists
+          // 3. Adds demo data if collections are empty
+          await import('./lib/initDb').then(module => 
+            module.initializeApplication()
+          );
+          
+          console.log('Application initialization completed successfully!');
           
           // Mark as initialized in local storage
           localStorage.setItem('dbInitialized', 'true');
         } catch (error) {
-          console.error('Error during database initialization:', error);
+          console.error('Error during application initialization:', error);
           setInitError(error instanceof Error ? error : new Error('Failed to initialize database'));
         }
       })();

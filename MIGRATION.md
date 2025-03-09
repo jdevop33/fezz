@@ -1,6 +1,6 @@
 # Migrating from Supabase to Firebase
 
-This document provides instructions for migrating data from Supabase to Firebase Firestore.
+This document provides instructions for migrating data from Supabase to Firebase Firestore and resolving common issues.
 
 ## Prerequisites
 
@@ -40,43 +40,97 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 4. Check the `migration-results.json` file that will be created in the project root to see the results of the migration.
 
-## Verifying Migration
+## Fixing "relation 'public.orders' does not exist" Error
 
-1. Check your Firestore console to verify that data has been migrated:
-   - Go to: https://console.firebase.google.com/project/fezz-452821/firestore/data
-   - Verify that collections have been created and data has been migrated
+If you encounter this error, it means the Supabase database doesn't have an `orders` table that the migration script is trying to migrate.
 
-2. Run your application using Firebase and verify functionality:
-   ```bash
-   npm run dev
+**Fix Option 1: Client-Side Initialization**
+The app has been updated to automatically create missing collections (including `orders`) when it starts:
+
+1. In your browser, load the application with initialization parameter:
+   ```
+   http://localhost:5173/?init-db=true
    ```
 
-## Troubleshooting
+2. This will trigger the `initializeApplication()` function in `src/lib/initDb.ts` which will:
+   - Create the orders collection with a sample order
+   - Set up user roles and permissions
+   - Create a demo owner account if needed
 
-If you encounter issues during migration:
+**Fix Option 2: Manual Collection Creation**
+Run the dedicated script to create missing collections:
 
-1. **Supabase Connection Issues**:
-   - Verify your Supabase URL and anon key are correct
-   - Check that you have proper permissions to read data
+```bash
+node scripts/create-collection.js orders
+```
 
-2. **Firebase Connection Issues**:
-   - Ensure Firestore database has been created
-   - Verify your Firebase config is correct
-   - Check that you have proper permissions to write data
+## Setting Up User Approval Workflow
 
-3. **Data Mapping Issues**:
-   - The migration script uses specific mappings from Supabase to Firestore
-   - If your Supabase schema differs, you may need to adjust the mappings in the migration script
+The user approval workflow has been implemented with the following components:
 
-## After Migration
+1. **User Roles**: The app defines several user roles in `settings/role_*` documents
+   - retail: Regular retail customers
+   - wholesale: Wholesale buyers
+   - distributor: Product distributors
+   - admin: System administrators
+   - owner: System owner with full permissions
 
-After successful migration:
+2. **Approval Status**: Users have status fields
+   - `approved`: boolean
+   - `status`: 'pending', 'active', or 'rejected'
 
-1. Update your application to use Firebase instead of Supabase
-2. Deploy your updated application
-3. Monitor for any issues
+3. **Admin Dashboard**: Administrators can approve or reject pending accounts at:
+   ```
+   /admin/approvals
+   ```
 
-For the "Not found" issue:
-- Make sure your routes are correctly defined
-- Check that Firebase hosting is correctly set up with proper rewrites in firebase.json
-- Verify that your build process is generating the expected files
+If you don't have any admin or owner accounts yet, you can:
+
+1. Create an owner account manually with:
+   ```bash
+   node scripts/create-owner.js
+   ```
+
+2. Or let the application auto-create a demo owner when initializing:
+   ```
+   http://localhost:5173/?init-db=true
+   ```
+
+## Database Structure After Migration
+
+### Collections
+
+1. **users**: User accounts and profiles
+   - Migrated from Supabase `profiles` table
+   - Contains user role, approval status, and profile info
+
+2. **products**: Product catalog
+   - Migrated from Supabase `products` table
+   - Contains product details, pricing, inventory
+
+3. **orders**: Order history (new collection)
+   - Created directly in Firebase
+   - Contains order items, pricing, shipping info
+
+4. **settings**: Application settings (new collection)
+   - Created directly in Firebase
+   - Contains user roles, permissions, and app configuration
+
+## Troubleshooting Other Issues
+
+If you encounter additional migration issues:
+
+1. **Firebase Admin SDK Authentication Errors**:
+   - Use client-side Firebase SDK for initialization
+   - Check service account key file permissions
+   - Verify Firebase project permissions
+
+2. **Missing Collections**:
+   - Run the initialization with URL parameter: `?init-db=true`
+   - Or manually create collections with `scripts/create-collection.js`
+
+3. **No Admin/Owner Account**:
+   - Use the initialization process which creates a demo owner
+   - Or manually create an owner with `scripts/create-owner.js`
+
+After migration, remember to update your Firebase security rules to protect your data by following the patterns in `firestore.rules`.

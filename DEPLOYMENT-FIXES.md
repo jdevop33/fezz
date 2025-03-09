@@ -1,8 +1,51 @@
-# Deployment Fixes for "Not Found" Issue
+# Deployment Fixes for Firebase Migration
 
-If you're seeing a "Not Found" page after deploying to Firebase Hosting, try these fixes:
+This document outlines common issues and fixes when deploying the application to Firebase.
 
-## 1. Verify GitHub Secrets
+## Fixing "relation 'public.orders' does not exist" Migration Error
+
+If you encounter this error during migration, it means your Supabase database doesn't have an orders table, but the migration script is trying to access it.
+
+### Solution 1: Use Client-Side Initialization
+
+1. Access the app with initialization parameter:
+   ```
+   https://your-app-url.web.app/?init-db=true
+   ```
+   
+2. This triggers the improved initialization process that:
+   - Creates the orders collection and adds a sample order
+   - Sets up user roles and permissions
+   - Creates a demo owner account if needed
+
+### Solution 2: Run Manual Setup Script
+
+1. Make sure your Firebase environment variables are set in `.env`
+2. Run the collection creation script:
+   ```bash
+   node scripts/create-collection.js orders
+   ```
+
+## User Account Approval Flow
+
+If you need to set up the user approval workflow:
+
+1. Create an owner account by visiting:
+   ```
+   https://your-app-url.web.app/?init-db=true
+   ```
+   
+2. Login as the demo owner:
+   - Email: demo-owner@example.com
+   - Password: (set during initialization)
+
+3. Approve or reject pending accounts:
+   - Visit the admin approvals page: `/admin/approvals`
+   - View pending accounts and approve/reject them
+
+## Setting Up Firebase for Deployment
+
+### 1. Verify GitHub Secrets
 
 First, check that your GitHub secrets are correctly set up:
 
@@ -10,7 +53,7 @@ First, check that your GitHub secrets are correctly set up:
 2. Verify that `FIREBASE_SERVICE_ACCOUNT` contains the complete JSON service account key
 3. Make sure all Firebase configuration secrets are present
 
-## 2. Set up environment variables
+### 2. Set up environment variables
 
 Run the script to set up your environment variables:
 
@@ -20,7 +63,7 @@ npm run create-env
 
 This will create a `.env` file with the Firebase configuration.
 
-## 2. Create Firestore database
+### 3. Create Firestore database
 
 Make sure you've created a Firestore database in the Firebase console:
 
@@ -30,14 +73,16 @@ Make sure you've created a Firestore database in the Firebase console:
 4. Select a location close to your users
 5. Click "Enable"
 
-## 3. Rebuild and redeploy
+### 4. Deploy to Firebase
+
+Build and deploy the application:
 
 ```bash
 npm run build
 firebase deploy
 ```
 
-## 4. Check Firebase Hosting configuration
+### 5. Check Firebase Hosting configuration
 
 Make sure your firebase.json has the proper rewrites:
 
@@ -50,7 +95,9 @@ Make sure your firebase.json has the proper rewrites:
 ]
 ```
 
-## 5. Check routing in App.tsx
+## Troubleshooting General "Not Found" Issues
+
+### 1. Check routing in App.tsx
 
 Make sure your routes are properly defined and there's a 404 route catch-all:
 
@@ -61,16 +108,27 @@ Make sure your routes are properly defined and there's a 404 route catch-all:
 }
 ```
 
-## 6. Generate Firebase CI token
+### 2. Check Firebase and Firestore configuration
 
-For CI/CD deployment:
+1. Verify your Firebase project has the correct permissions
+2. Make sure all collections exist in Firestore
+3. Check security rules to ensure proper access
 
-```bash
-firebase login:ci
-```
+### 3. Look for initialization errors
 
-Use the token in your GitHub repository secrets.
+Check the browser console for initialization errors. If you see database initialization errors:
 
-## 7. Check console for errors
+1. Try forcing initialization with: `/?init-db=true`
+2. Clear browser localStorage and reload
+3. Manually run the initialization scripts:
+   ```bash
+   node scripts/fix-firebase-connect.js
+   ```
 
-After deploying, check your browser's console for any errors that might be occurring during loading.
+### 4. Check for Auth issues
+
+If users can't sign in or access protected routes:
+
+1. Check Firebase Authentication is enabled
+2. Verify security rules in firestore.rules
+3. Set up default admin user if needed
