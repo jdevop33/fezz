@@ -1,10 +1,9 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './components/ThemeProvider';
 import { AuthProvider } from './lib/AuthContext';
 import { CartProvider } from './lib/hooks/useCart';
-import { initializeDatabase } from './lib/initDb';
 import { ProductProvider } from './contexts/ProductContext';
 
 // Loading fallback
@@ -15,15 +14,20 @@ const PageLoader = () => (
 );
 
 // Wrap lazy components with Suspense
-const lazyWithSuspense = <T extends Record<string, unknown>>(
-  importFn: () => Promise<{ default: React.ComponentType<T> }>
+const lazyWithSuspense = <P extends {}>(
+  importFn: () => Promise<{ default: React.ComponentType<P> }>
 ) => {
   const LazyComponent = lazy(importFn);
-  return (props: T) => (
-    <Suspense fallback={<PageLoader />}>
-      <LazyComponent {...props} />
-    </Suspense>
-  );
+  
+  // Use "any" just for the component props spread, which is safe in this context
+  // because we know LazyComponent expects props of type P
+  return function WithSuspense(props: P): JSX.Element {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <LazyComponent {...(props as any)} />
+      </Suspense>
+    );
+  };
 };
 
 // Lazy load pages for better performance
@@ -53,11 +57,12 @@ import Navbar from './components/Navbar';
 import ProductDetail from './components/products/ProductDetail';
 import DebugComponentPath from './components/DebugComponentPath';
 
-// Layout component to wrap routes with the Navbar
-const MainLayout = ({ children }: { children: React.ReactNode }) => (
+// Layout component to wrap routes with the Navbar and Debug component in DEV
+const MainLayout = () => (
   <>
     <Navbar />
-    {children}
+    <Outlet />
+    {import.meta.env.DEV && <DebugComponentPath />}
   </>
 );
 
@@ -65,31 +70,41 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => (
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <MainLayout><LandingPage /></MainLayout>
-  },
-  {
-    path: "/login",
-    element: <MainLayout><LoginPage /></MainLayout>
-  },
-  {
-    path: "/signup",
-    element: <MainLayout><SignupPage /></MainLayout>
-  },
-  {
-    path: "/setup",
-    element: <MainLayout><SetupPage /></MainLayout>
-  },
-  {
-    path: "/products",
-    element: <MainLayout><ProductsPage /></MainLayout>
-  },
-  {
-    path: "/products/:productId",
-    element: <MainLayout><ProductDetail /></MainLayout>
-  },
-  {
-    path: "/dashboard",
-    element: <ProtectedRoute><MainLayout><DashboardPage /></MainLayout></ProtectedRoute>
+    element: <MainLayout />,
+    children: [
+      {
+        index: true,
+        element: <LandingPage />
+      },
+      {
+        path: "login",
+        element: <LoginPage />
+      },
+      {
+        path: "signup",
+        element: <SignupPage />
+      },
+      {
+        path: "setup",
+        element: <SetupPage />
+      },
+      {
+        path: "products",
+        element: <ProductsPage />
+      },
+      {
+        path: "products/:productId",
+        element: <ProductDetail />
+      },
+      {
+        path: "dashboard",
+        element: <ProtectedRoute><DashboardPage /></ProtectedRoute>
+      },
+      {
+        path: "*",
+        element: <NotFoundPage />
+      }
+    ]
   },
   {
     path: "/admin",
@@ -132,15 +147,10 @@ const router = createBrowserRouter([
         element: <ProtectedRoute isOwner><SystemSettings /></ProtectedRoute>
       }
     ]
-  },
-  {
-    path: "*",
-    element: <MainLayout><NotFoundPage /></MainLayout>
   }
 ], {
   future: {
     v7_relativeSplatPath: true,
-    v7_startTransition: true,
     v7_normalizeFormMethod: true
   },
 });
@@ -170,13 +180,15 @@ function App() {
         try {
           console.log('Starting application initialization...');
           
-          // Use the new initializeApplication function that:
-          // 1. Creates required collections (orders, settings, etc.)
-          // 2. Ensures an owner account exists
-          // 3. Adds demo data if collections are empty
-          await import('./lib/initDb').then(module => 
-            module.initializeApplication()
-          );
+          // Use the initializeDatabase function from initDb.ts
+          const initModule = await import('./lib/initDb');
+          // Check if initializeApplication exists
+          if (typeof initModule.initializeApplication === 'function') {
+            await initModule.initializeApplication();
+          } else {
+            // Fall back to initializeDatabase if the other function doesn't exist
+            await initModule.initializeDatabase();
+          }
           
           console.log('Application initialization completed successfully!');
           
@@ -219,11 +231,15 @@ function App() {
             {initError && (
               <div className="fixed top-0 left-0 right-0 bg-red-500 text-white text-center p-2 z-50">
                 Database initialization error: {initError.message}
+                <button 
+                  onClick={() => setInitError(null)}
+                  className="ml-2 px-2 py-0.5 bg-red-600 rounded hover:bg-red-700"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
             <RouterProvider router={router} />
-            {/* Debug component to help see which component is rendering */}
-            {import.meta.env.DEV && <DebugComponentPath />}
           </ProductProvider>
         </CartProvider>
       </AuthProvider>

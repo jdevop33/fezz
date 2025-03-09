@@ -7,6 +7,7 @@ import { db } from '../../lib/firebase';
 import { useCart } from '../../lib/hooks';
 import { useAuth } from '../../lib/hooks';
 import { getUser } from '../../lib/pouchesDb';
+import ProductPaymentIcons from './ProductPaymentIcons';
 
 // Import the actual Product type from types.ts
 import type { Product as ProductType } from '../../lib/types';
@@ -648,6 +649,14 @@ const ProductDetail = () => {
                     <p className="mt-1 text-xs text-surface-500">Must be 21+ to purchase</p>
                   </div>
                 </div>
+              </div>
+              
+              {/* Payment Methods */}
+              <div className="mt-6">
+                <h3 className="text-sm font-medium text-surface-900 mb-3">Payment Methods</h3>
+                <React.Suspense fallback={<div>Loading...</div>}>
+                  <ProductPaymentIcons />
+                </React.Suspense>
               </div>
             </div>
           </div>

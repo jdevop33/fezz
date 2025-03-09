@@ -2,6 +2,7 @@ import React from 'react';
 import { Building2, Shield, Award, Scale, Mail, MapPin, Phone, Github, Twitter, Linkedin, Facebook } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from './ThemeToggle';
+import PaymentIcons from './PaymentIcons';
 
 function Footer() {
   const currentYear = new Date().getFullYear();
@@ -148,6 +149,21 @@ function Footer() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+
+        {/* Payment Methods */}
+        <div className="py-8 border-t border-surface-200 dark:border-surface-800">
+          <div className="max-w-xl mx-auto">
+            <h3 className="text-sm font-semibold text-surface-900 dark:text-white tracking-wider uppercase text-center mb-2">
+              Accepted Payment Methods
+            </h3>
+            <div className="flex justify-center">
+              {/* Import our payment icons component */}
+              <React.Suspense fallback={<div>Loading...</div>}>
+                <PaymentIcons />
+              </React.Suspense>
+            </div>
           </div>
         </div>
 
