@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Building2, Mail, Lock, AlertCircle, LogIn, ArrowRight } from 'lucide-react';
-import { useAuth } from '../lib/AuthContext';
+import { useAuth } from '../lib/hooks';
 import { toast } from 'sonner';
 
 function LoginPage() {

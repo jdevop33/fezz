@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { 
   User, 
   createUserWithEmailAndPassword, 
@@ -30,19 +30,10 @@ interface AuthContextType {
   verifyEmail: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+// Export the context so it can be imported in the hook file
+export const AuthContext = createContext<AuthContextType | null>(null);
 
-/**
- * Hook to access authentication context
- * @returns AuthContextType
- */
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+// The useAuth hook has been moved to a separate file: src/lib/hooks/useAuth.ts
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);

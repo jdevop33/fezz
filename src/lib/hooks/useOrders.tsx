@@ -9,7 +9,7 @@ import {
   COLLECTIONS,
   listenToDocument
 } from '../pouchesDb';
-import { useAuth } from '../AuthContext';
+import { useAuth } from './useAuth';
 
 interface UseOrdersOptions {
   status?: Order['status'];

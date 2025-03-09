@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, ShoppingCart, Star, Filter, X, SlidersHorizontal, Loader2 } from 'lucide-react';
-import { useCart } from '../../lib/hooks/useCart';
-import { useAuth } from '../../lib/AuthContext';
+import { useCart } from '../../lib/hooks';
+import { useAuth } from '../../lib/hooks';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Product } from '../../lib/types';
 import { useProducts, ProductFilters } from '../../contexts/ProductContext';

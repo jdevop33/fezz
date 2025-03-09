@@ -93,7 +93,7 @@ const Navbar = () => {
               className="inline-flex items-center justify-center rounded-md p-2 text-surface-500 hover:bg-surface-100 hover:text-surface-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
               aria-expanded={isMobileMenuOpen}
               aria-label="Toggle menu"
-              tabIndex="0"
+              tabIndex={0}
             >
               {isMobileMenuOpen ? (
                 <X size={24} aria-hidden="true" />
@@ -119,7 +119,7 @@ const Navbar = () => {
                   <button 
                     className="flex items-center px-3 py-2 text-sm font-medium text-surface-700 hover:text-primary-600"
                     aria-expanded="false"
-                    tabIndex="0"
+                    tabIndex={0}
                   >
                     {item.name}
                     <ChevronDown size={16} className="ml-1 transition-transform duration-200 group-hover:rotate-180" />
@@ -159,7 +159,7 @@ const Navbar = () => {
               onKeyDown={(e) => handleKeyDown(e, handleSearchToggle)}
               className="ml-2 rounded-full p-1 text-surface-500 hover:bg-surface-100 hover:text-surface-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
               aria-label="Open search"
-              tabIndex="0"
+              tabIndex={0}
             >
               <Search size={20} aria-hidden="true" />
             </button>
@@ -169,7 +169,7 @@ const Navbar = () => {
               href="#"
               className="ml-4 rounded-full p-1 text-surface-500 hover:bg-surface-100 hover:text-surface-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
               aria-label="Your account"
-              tabIndex="0"
+              tabIndex={0}
             >
               <User size={20} aria-hidden="true" />
             </a>
@@ -179,7 +179,7 @@ const Navbar = () => {
               href="#"
               className="ml-4 flex items-center rounded-full p-1 text-surface-500 hover:bg-surface-100 hover:text-surface-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
               aria-label={`Shopping cart with ${cartCount} items`}
-              tabIndex="0"
+              tabIndex={0}
             >
               <span className="relative">
                 <ShoppingCart size={20} aria-hidden="true" />

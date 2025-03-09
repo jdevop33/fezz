@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { Building2, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useAuth } from '../lib/AuthContext';
+import { useAuth } from '../lib/hooks';
 import { setDocument } from '../lib/pouchesDb';
 
 interface SignupFormData {

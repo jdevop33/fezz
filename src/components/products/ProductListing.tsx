@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ChevronDown, ShoppingCart, Star, Filter, X, SlidersHorizontal } from 'lucide-react';
 import { getProducts } from '../../lib/firestore';
-import { useCart } from '../../lib/hooks/useCart';
+import { useCart } from '../../lib/hooks';
 
 interface Product {
   id: string;

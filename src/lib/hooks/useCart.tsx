@@ -1,7 +1,7 @@
-import { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import { useState, useEffect, createContext, useCallback } from 'react';
 import { Product } from '../types';
 import { toast } from 'sonner';
-import { useAuth } from '../AuthContext';
+import { useAuth } from './useAuth';
 
 // Define Enhanced CartItem type
 export interface CartItem {
@@ -27,8 +27,8 @@ interface CartContextType {
   isItemInCart: (productId: string) => boolean;
 }
 
-// Create context with default values
-const CartContext = createContext<CartContextType>({
+// Export the context so it can be imported in the hook file
+export const CartContext = createContext<CartContextType>({
   items: [],
   addToCart: () => {},
   removeItem: () => {},
@@ -250,8 +250,4 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-/**
- * Custom hook to use the cart context
- * @returns CartContextType
- */
-export const useCart = () => useContext(CartContext);
+// The useCart hook has been moved to a separate file: src/lib/hooks/useCartHook.ts

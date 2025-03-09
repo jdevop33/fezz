@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { getAllProducts, Product } from '../lib/pouchesDb';
 import { db } from '../lib/firebase';
 import { collection, query, getDocs, QueryConstraint, where, orderBy } from 'firebase/firestore';
@@ -26,20 +26,10 @@ export interface ProductFilters {
   limit?: number;
 }
 
-const ProductContext = createContext<ProductContextType | null>(null);
+// Export the context so it can be imported in the hook file
+export const ProductContext = createContext<ProductContextType | null>(null);
 
-// Create hook outside of component to avoid React refresh warnings
-/**
- * Hook to access product context
- * @returns ProductContextType
- */
-export const useProducts = () => {
-  const context = useContext(ProductContext);
-  if (!context) {
-    throw new Error('useProducts must be used within a ProductProvider');
-  }
-  return context;
-};
+// The useProducts hook has been moved to a separate file: src/lib/hooks/useProducts.ts
 
 export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);

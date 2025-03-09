@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -18,7 +18,8 @@ const initialState: ThemeProviderState = {
   setTheme: () => null,
 };
 
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
+// Export the context so it can be imported in the hook file
+export const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
@@ -62,15 +63,4 @@ export function ThemeProvider({
   );
 }
 
-// Move this to a separate file (useTheme.ts) to avoid React Fast Refresh warnings
-/**
- * Hook to access theme context
- */
-export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
-  
-  if (context === undefined)
-    throw new Error('useTheme must be used within a ThemeProvider');
-    
-  return context;
-};
+// The useTheme hook has been moved to a separate file: src/lib/hooks/useTheme.ts

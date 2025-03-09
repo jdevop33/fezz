@@ -3,8 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Star, Minus, Plus, ChevronRight, Truck, Shield, CheckCircle, ShoppingCart, Heart, Edit, Trash } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { useCart } from '../../lib/hooks/useCart';
-import { useAuth } from '../../lib/AuthContext';
+import { useCart } from '../../lib/hooks';
+import { useAuth } from '../../lib/hooks';
 
 interface Product {
   id: string;

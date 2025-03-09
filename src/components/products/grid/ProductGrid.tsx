@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useProducts } from '../../../lib/hooks';
-import { useCart } from '../../../lib/hooks/useCart';
-import { useAuth } from '../../../lib/AuthContext';
+import { useCart } from '../../../lib/hooks';
+import { useAuth } from '../../../lib/hooks';
 import { Package, Filter, ShoppingCart } from 'lucide-react';
 
 const ProductGrid: React.FC = () => {

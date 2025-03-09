@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useCart } from '../../lib/hooks';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../lib/AuthContext';
+import { useAuth } from '../../lib/hooks';
 import { ShoppingCart as CartIcon, X, Trash2, Plus, Minus, ChevronRight } from 'lucide-react';
 
 interface ShoppingCartProps {

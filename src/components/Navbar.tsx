@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Search, Menu, X, ChevronDown, LogOut } from 'lucide-react';
-import { useAuth } from '../lib/AuthContext';
-import { useCart } from '../lib/hooks/useCart';
+import { useAuth } from '../lib/hooks';
+import { useCart } from '../lib/hooks';
 
 const Navbar = () => {
   // Router and auth
