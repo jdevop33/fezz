@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  CheckCircle2, ArrowRight, Star, Flask, Shield
+  CheckCircle2, ArrowRight, Star, FlaskConical, Shield
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -115,7 +115,7 @@ function LandingPage() {
                 
                 <div className="flex items-center">
                   <div className="flex-shrink-0 rounded-full bg-surface-800/50 p-2">
-                    <Flask className="h-5 w-5 text-puxx-premium-500" />
+                    <FlaskConical className="h-5 w-5 text-puxx-premium-500" />
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-white">Innovative Design</p>
@@ -374,7 +374,7 @@ function LandingPage() {
                 <div className="bg-white dark:bg-surface-800 rounded-xl shadow-soft p-6 border border-surface-100 dark:border-surface-700">
                   <div className="flex items-center">
                     <div className="h-10 w-10 rounded-full bg-puxx-premium-100 dark:bg-puxx-premium-900/50 flex items-center justify-center">
-                      <Flask className="h-5 w-5 text-puxx-premium-600 dark:text-puxx-premium-400" />
+                      <FlaskConical className="h-5 w-5 text-puxx-premium-600 dark:text-puxx-premium-400" />
                     </div>
                     <h3 className="ml-3 text-lg font-semibold text-surface-900 dark:text-white">Flavor Engineering</h3>
                   </div>

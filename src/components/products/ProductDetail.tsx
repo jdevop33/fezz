@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Star, Minus, Plus, ChevronRight, Truck, Shield, CheckCircle, ShoppingCart, Heart, Edit, Trash } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
+import { toast } from 'sonner';
 import { db } from '../../lib/firebase';
 import { useCart } from '../../lib/hooks';
 import { useAuth } from '../../lib/hooks';
@@ -49,11 +50,11 @@ interface ProductVariant {
 const ProductDetail = () => {
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
-  const { user } = useAuth();
+  const { addToCart, updateQuantity } = useCart();
+  const { currentUser } = useAuth();
   
-  // Check if user is admin or owner
-  const isAdmin = user?.isAdmin || user?.isOwner;
+  // Check if user is admin or owner based on role
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'owner';
 
   // State
   const [product, setProduct] = useState<Product | null>(null);
@@ -145,18 +146,53 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
+    // Check if product is in stock
+    if (product.inventoryCount !== undefined && product.inventoryCount <= 0) {
+      toast.error('This product is currently out of stock');
+      return;
+    }
+    
+    // First add the base item - we use the "name" property as expected by the addToCart function
+    // Note: product.itemPN is mapped to "name" parameter which is what the cart expects
     addToCart({
       id: product.id,
-      name: product.itemPN || product.flavor + " " + product.strength + "mg",
+      name: product.itemPN || `${product.flavor} ${product.strength}mg`,
       price: product.price,
       imageUrl: product.imageUrl,
-      quantity: quantity
+      flavor: product.flavor,
+      strength: product.strength,
+      category: product.category,
+      inventoryCount: product.inventoryCount,
+      description: product.description,
+      wholesalePrice: product.wholesalePrice || product.price * 0.8
     });
+    
+    // Set the proper quantity if more than 1
+    if (quantity > 1) {
+      // Short timeout to ensure the item is added before updating quantity
+      setTimeout(() => {
+        updateQuantity(product.id, quantity);
+      }, 100);
+    }
   };
 
   const handleQuantityChange = (value: number) => {
-    const newQuantity = Math.max(1, Math.min(10, quantity + value));
-    setQuantity(newQuantity);
+    // Get maximum available based on inventory (default to 10 if not specified)
+    const maxAvailable = product?.inventoryCount !== undefined
+      ? Math.min(10, product.inventoryCount) 
+      : 10;
+      
+    // Ensure quantity stays between 1 and maxAvailable
+    const newQuantity = Math.max(1, Math.min(maxAvailable, quantity + value));
+    
+    if (newQuantity !== quantity) {
+      setQuantity(newQuantity);
+      
+      // Show feedback if we hit a limit
+      if (newQuantity === maxAvailable && value > 0) {
+        toast.info(`Maximum quantity of ${maxAvailable} reached`);
+      }
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -333,47 +369,91 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Price */}
-            <div className="mb-6">
-              <div className="flex items-end">
-                <p className="text-2xl font-bold text-surface-900">${product.price.toFixed(2)}</p>
-                {product.originalPrice && (
-                  <p className="ml-2 text-base text-surface-500 line-through">
-                    ${product.originalPrice.toFixed(2)}
-                  </p>
-                )}
-              </div>
-              <div className="mt-1 flex items-center gap-2">
-                <p className="text-sm text-success-600">
-                  {product.inventoryCount === undefined || product.inventoryCount > 10 
-                    ? 'In stock and ready to ship' 
-                    : product.inventoryCount > 0 
-                      ? `Low stock (${product.inventoryCount} remaining)` 
-                      : 'Out of stock'
-                  }
-                </p>
+            {/* Price - Enhanced with better visual hierarchy */}
+            <div className="mb-8 relative overflow-hidden rounded-lg bg-gradient-to-br from-surface-50 to-surface-100 p-4 border border-surface-200 shadow-sm">
+              <div className="flex flex-col">
+                <div className="flex items-end gap-2 mb-1">
+                  <p className="text-3xl font-extrabold tracking-tight text-surface-900">${product.price.toFixed(2)}</p>
+                  {product.originalPrice && (
+                    <div className="flex items-center space-x-2">
+                      <p className="text-base text-surface-500 line-through">
+                        ${product.originalPrice.toFixed(2)}
+                      </p>
+                      <span className="inline-flex items-center rounded-full bg-success-100 px-2.5 py-0.5 text-xs font-medium text-success-700">
+                        Save ${(product.originalPrice - product.price).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
                 
-                {isAdmin && (
-                  <span className="rounded-full bg-surface-100 px-2 py-0.5 text-xs font-medium text-surface-700">
-                    Inventory: {product.inventoryCount || 0} units
-                  </span>
-                )}
+                <div className="flex items-center gap-2 mt-2">
+                  {product.inventoryCount === undefined || product.inventoryCount > 10 ? (
+                    <div className="flex items-center text-success-600">
+                      <div className="mr-1.5 h-2 w-2 rounded-full bg-success-500"></div>
+                      <p className="text-sm font-medium">In stock and ready to ship</p>
+                    </div>
+                  ) : product.inventoryCount > 0 ? (
+                    <div className="flex items-center text-amber-600">
+                      <div className="mr-1.5 h-2 w-2 rounded-full bg-amber-500"></div>
+                      <p className="text-sm font-medium">Low stock ({product.inventoryCount} remaining)</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-red-600">
+                      <div className="mr-1.5 h-2 w-2 rounded-full bg-red-500"></div>
+                      <p className="text-sm font-medium">Out of stock</p>
+                    </div>
+                  )}
+                  
+                  {isAdmin && (
+                    <span className="ml-auto rounded-full bg-surface-200 px-2.5 py-0.5 text-xs font-medium text-surface-700 border border-surface-300">
+                      Inventory: {product.inventoryCount || 0} units
+                    </span>
+                  )}
+                </div>
               </div>
+              
+              {/* Decorative element for visual interest */}
+              <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-primary-100 opacity-50"></div>
+              <div className="absolute -left-6 -bottom-6 h-12 w-12 rounded-full bg-surface-200 opacity-40"></div>
             </div>
 
-            {/* Description */}
-            <div className="mb-6">
-              <p className={`text-surface-600 ${!readMore && 'line-clamp-3'}`}>
-                {product.description || `Experience the fresh sensation of premium ${product.flavor.toLowerCase()} with PUXX ${product.strength > 12 ? 'Strong' : 'Light'}. These tobacco-free nicotine pouches deliver a ${product.strength > 12 ? 'powerful' : 'satisfying'} experience with a clean, refreshing flavor that lasts longer.`}
-              </p>
-              <button 
-                onClick={() => setReadMore(!readMore)}
-                className="mt-2 text-sm font-medium text-primary-600 hover:text-primary-700"
-                aria-label={readMore ? "Show less details" : "Show more details"}
-                tabIndex={0}
-              >
-                {readMore ? 'Show less' : 'Show more'}
-              </button>
+            {/* Description - Enhanced with better typography and visual interest */}
+            <div className="mb-8 bg-surface-50 rounded-lg border border-surface-200 overflow-hidden">
+              <div className="px-4 py-3 bg-gradient-to-r from-surface-100 to-surface-50 border-b border-surface-200">
+                <h3 className="text-sm font-semibold text-surface-900">About This Product</h3>
+              </div>
+              
+              <div className="p-4">
+                <div className={`prose prose-surface max-w-none ${!readMore && 'line-clamp-3'}`}>
+                  <p className="text-surface-700 leading-relaxed">
+                    {product.description || `Experience the fresh sensation of premium ${product.flavor.toLowerCase()} with PUXX ${product.strength > 12 ? 'Strong' : 'Light'}. These tobacco-free nicotine pouches deliver a ${product.strength > 12 ? 'powerful' : 'satisfying'} experience with a clean, refreshing flavor that lasts longer.`}
+                  </p>
+                </div>
+                
+                <div className="mt-3 flex items-center">
+                  <button 
+                    onClick={() => setReadMore(!readMore)}
+                    className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                    aria-label={readMore ? "Show less details" : "Show more details"}
+                    tabIndex={0}
+                  >
+                    <span>{readMore ? 'Show less' : 'Show more'}</span>
+                    <svg 
+                      className={`ml-1 h-4 w-4 transform transition-transform duration-200 ${readMore ? 'rotate-180' : ''}`} 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Subtle badge indicating content */}
+                  <span className="ml-auto inline-flex items-center rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700">
+                    Product Details
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Strength variants */}
@@ -414,55 +494,110 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Quantity selector */}
+            {/* Quantity selector - Enhanced with better visuals and feedback */}
             <div className="mb-6">
-              <h3 className="mb-3 text-sm font-medium text-surface-900">Quantity</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-surface-900">Quantity</h3>
+                <span className="text-xs text-surface-500 italic">Select how many pouches to add</span>
+              </div>
+              
               <div className="flex items-center">
                 <button
                   onClick={() => handleQuantityChange(-1)}
-                  className="flex h-10 w-10 items-center justify-center rounded-l-md border border-r-0 border-surface-300 bg-surface-50 text-surface-600 hover:bg-surface-100"
+                  disabled={quantity <= 1}
+                  className="relative group flex h-12 w-12 items-center justify-center rounded-l-md border border-r-0 border-surface-300 bg-gradient-to-b from-white to-surface-50 text-surface-600 shadow-sm transition-all duration-150 hover:from-surface-50 hover:to-surface-100 hover:text-surface-800 active:to-surface-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Decrease quantity"
-                  tabIndex={0}
+                  tabIndex={quantity <= 1 ? -1 : 0}
                 >
-                  <Minus size={16} />
+                  <Minus size={18} className="transform transition-transform group-hover:scale-110 group-active:scale-95" />
+                  {/* Subtle pill indicator for hover state */}
+                  <span className="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-medium bg-surface-200 text-surface-600 px-1.5 py-0.5 rounded-full">
+                    -1
+                  </span>
                 </button>
-                <input
-                  type="text"
-                  value={quantity}
-                  readOnly
-                  className="h-10 w-16 border-y border-surface-300 bg-white text-center text-surface-900"
-                  aria-label="Product quantity"
-                />
+                
+                <div className="relative group">
+                  <input
+                    type="text"
+                    value={quantity}
+                    readOnly
+                    className="h-12 w-20 border-y border-surface-300 bg-white text-center text-lg font-medium text-surface-900 transition-all focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
+                    aria-label="Product quantity"
+                  />
+                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <span className="text-xs text-surface-500 bg-white px-2 py-1 rounded-md shadow-sm border border-surface-200">
+                      Current quantity
+                    </span>
+                  </div>
+                </div>
+                
                 <button
                   onClick={() => handleQuantityChange(1)}
-                  className="flex h-10 w-10 items-center justify-center rounded-r-md border border-l-0 border-surface-300 bg-surface-50 text-surface-600 hover:bg-surface-100"
+                  disabled={quantity >= (product?.inventoryCount !== undefined ? Math.min(10, product.inventoryCount) : 10)}
+                  className="relative group flex h-12 w-12 items-center justify-center rounded-r-md border border-l-0 border-surface-300 bg-gradient-to-b from-white to-surface-50 text-surface-600 shadow-sm transition-all duration-150 hover:from-surface-50 hover:to-surface-100 hover:text-surface-800 active:to-surface-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Increase quantity"
-                  tabIndex={0}
+                  tabIndex={quantity >= (product?.inventoryCount !== undefined ? Math.min(10, product.inventoryCount) : 10) ? -1 : 0}
                 >
-                  <Plus size={16} />
+                  <Plus size={18} className="transform transition-transform group-hover:scale-110 group-active:scale-95" />
+                  {/* Subtle pill indicator for hover state */}
+                  <span className="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-medium bg-surface-200 text-surface-600 px-1.5 py-0.5 rounded-full">
+                    +1
+                  </span>
                 </button>
+              </div>
+              
+              {/* Maximum quantity indicator */}
+              <div className="mt-2 flex justify-end">
+                <span className="text-xs text-surface-500">
+                  {product.inventoryCount !== undefined && 
+                    `Maximum ${Math.min(10, product.inventoryCount)} per order`}
+                </span>
               </div>
             </div>
 
-            {/* Add to cart button */}
+            {/* Add to cart button - Enhanced with depth and visual interest */}
             <div className="mb-8 flex flex-col gap-4 sm:flex-row">
               <button
                 onClick={handleAddToCart}
                 onKeyDown={handleKeyDown}
-                className="flex-1 rounded-md bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                aria-label="Add to cart"
-                tabIndex={0}
+                disabled={product?.inventoryCount !== undefined && product.inventoryCount <= 0}
+                className={`relative flex-1 rounded-md px-6 py-3.5 text-base font-medium shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                  product?.inventoryCount !== undefined && product.inventoryCount <= 0
+                    ? 'bg-surface-300 text-surface-500 cursor-not-allowed'
+                    : 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0'
+                }`}
+                aria-label={
+                  product?.inventoryCount !== undefined && product.inventoryCount <= 0
+                    ? 'Product out of stock'
+                    : 'Add to cart'
+                }
+                tabIndex={product?.inventoryCount !== undefined && product.inventoryCount <= 0 ? -1 : 0}
               >
-                <ShoppingCart size={20} className="mr-2 inline" />
-                Add to Cart
+                <div className="flex items-center justify-center">
+                  {product?.inventoryCount !== undefined && product.inventoryCount <= 0 ? (
+                    <>
+                      <Minus size={20} className="mr-2" />
+                      <span>Out of Stock</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart size={20} className="mr-2" />
+                      <span>Add to Cart</span>
+                    </>
+                  )}
+                </div>
+                {/* Subtle decorative element for visual interest - only show for in-stock items */}
+                {!(product?.inventoryCount !== undefined && product.inventoryCount <= 0) && (
+                  <div className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-primary-400 opacity-70 animate-pulse"></div>
+                )}
               </button>
               <button
-                className="flex items-center justify-center rounded-md border border-surface-300 bg-white px-6 py-3 text-base font-medium text-surface-700 shadow-sm hover:bg-surface-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                className="flex items-center justify-center rounded-md border border-surface-200 bg-white px-6 py-3.5 text-base font-medium text-surface-700 shadow-sm transition-all duration-150 hover:bg-surface-50 hover:border-surface-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                 aria-label="Save to wishlist"
                 tabIndex={0}
               >
-                <Heart size={20} className="mr-2" />
-                Save
+                <Heart size={20} className="mr-2 text-surface-500 group-hover:text-surface-700" />
+                <span>Save</span>
               </button>
             </div>
 
