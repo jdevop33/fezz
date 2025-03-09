@@ -4,7 +4,8 @@ import { useCart } from '../../lib/hooks';
 import { useAuth } from '../../lib/hooks';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Product } from '../../lib/types';
-import { useProducts, ProductFilters } from '../../contexts/ProductContext';
+import { useProducts } from '../../lib/hooks';
+import { ProductFilters } from '../../contexts/ProductContext';
 import { toast } from 'sonner';
 
 interface ProductCardProps {
