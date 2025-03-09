@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { Building2, Users, Package, Battery as Category, Settings, LogOut, Shield, UserCog, CircleDollarSign, BarChart } from 'lucide-react';
 import clsx from 'clsx';
@@ -6,15 +6,26 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { auth } from '../lib/firebase';
 import { getUser, User } from '../lib/pouchesDb';
 
+// Import LucideIcon type
+import type { LucideIcon } from 'lucide-react';
+
+// Define the navigation item type
+type NavigationItem = {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  ownerOnly?: boolean;
+};
+
 // Navigation for admin users
-const adminNavigation = [
+const adminNavigation: NavigationItem[] = [
   { name: 'Products', href: '/admin/products', icon: Package },
   { name: 'Categories', href: '/admin/categories', icon: Category },
   { name: 'Pending Approvals', href: '/admin/approvals', icon: Users },
 ];
 
 // Additional navigation items for owners
-const ownerNavigation = [
+const ownerNavigation: NavigationItem[] = [
   { name: 'Payments', href: '/admin/payments', icon: CircleDollarSign, ownerOnly: true },
   { name: 'Reports', href: '/admin/reports', icon: BarChart, ownerOnly: true },
   { name: 'Admin Management', href: '/admin/admins', icon: UserCog, ownerOnly: true },

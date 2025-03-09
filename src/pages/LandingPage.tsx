@@ -856,15 +856,4 @@ function NavItem({ href, children }: { href: string; children: React.ReactNode }
   );
 }
 
-function NavItem({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a
-      href={href}
-      className="text-surface-600 hover:text-surface-900 dark:text-surface-400 dark:hover:text-white font-medium"
-    >
-      {children}
-    </a>
-  );
-}
-
 export default LandingPage;
