@@ -5,12 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:emulate": "bash scripts/start-emulators.sh",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "echo 'No tests specified'",
     "deploy": "bash scripts/deploy.sh",
-    "deploy:hosting": "bash scripts/deploy.sh",
+    "deploy:hosting": "bash scripts/deploy.sh --hosting-only",
+    "deploy:rules": "bash scripts/deploy.sh --rules-only",
+    "emulators": "firebase emulators:start",
+    "emulators:export": "firebase emulators:export ./emulator-data",
+    "emulators:import": "firebase emulators:start --import=./emulator-data --export-on-exit",
     "migrate": "node --experimental-json-modules scripts/migrate-to-firebase.js",
     "migrate:init": "node --experimental-json-modules scripts/migrate-and-initialize.js",
     "firebase:init": "node --experimental-json-modules scripts/firebase-init.js",
@@ -21,8 +26,6 @@
     "setup": "npm run create-env && npm run firebase:init",
     "setup:local-db": "node --experimental-json-modules scripts/setup-local-db.js",
     "create:firebase-db": "node --experimental-json-modules scripts/create-and-initialize-db.js",
-    "emulators": "firebase emulators:start",
-    "dev:emulate": "cross-env VITE_USE_FIREBASE_EMULATORS=true vite",
     "package": "npm run build && mkdir -p pouches-deployment && cp -r dist firestore.rules firestore.indexes.json storage.rules firebase.json .firebaserc .env.production pouches-deployment && zip -r pouches-deployment.zip pouches-deployment && echo 'Deployment package created: pouches-deployment.zip'"
   },
   "dependencies": {

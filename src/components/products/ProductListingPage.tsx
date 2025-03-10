@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, ShoppingCart, Star, Filter, X, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { useCart } from '../../lib/hooks';
 import { useAuth } from '../../lib/hooks';
+import { useUserRoles } from '../../lib/hooks';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Product } from '../../lib/types';
+import { Product, User } from '../../lib/types';
 import { useProducts } from '../../lib/hooks';
 import { ProductFilters } from '../../contexts/ProductContext';
 import { toast } from 'sonner';
@@ -19,8 +20,10 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const { currentUser } = useAuth();
   const { isItemInCart } = useCart();
   
+  // Use userProfile from useUserRoles to get the role
+  const { userProfile } = useUserRoles();
   // Check if user is wholesale/distributor for pricing
-  const isWholesale = currentUser?.role === 'wholesale' || currentUser?.role === 'distributor';
+  const isWholesale = userProfile?.role === 'wholesale' || userProfile?.role === 'distributor';
   const isInCart = isItemInCart(product.id);
 
   // Handle add to cart with better error handling
@@ -302,10 +305,11 @@ const ProductListingPage: React.FC = () => {
   const { currentUser } = useAuth();
   const { addToCart, isItemInCart } = useCart();
   const { filterProducts, products: allProducts } = useProducts();
+  const { userProfile, isAdmin, isOwner } = useUserRoles();
   
   // Check if user is admin or owner
-  const isAdmin = currentUser?.isAdmin || currentUser?.isOwner;
-  const isWholesale = currentUser?.role === 'wholesale' || currentUser?.role === 'distributor';
+  const isAdminUser = isAdmin || isOwner;
+  const isWholesale = userProfile?.role === 'wholesale' || userProfile?.role === 'distributor';
 
   // State for products, loading and error
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -532,7 +536,7 @@ const ProductListingPage: React.FC = () => {
             )}
             
             {/* Admin controls */}
-            {isAdmin && (
+            {isAdminUser && (
               <div className="mt-2 flex items-center gap-2">
                 <Link 
                   to="/admin/products" 
@@ -700,7 +704,7 @@ const ProductListingPage: React.FC = () => {
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredProducts.map(product => (
                   <div key={product.id} className="relative">
-                    {isAdmin && (
+                    {isAdminUser && (
                       <div className="absolute right-2 top-2 z-20 flex gap-1">
                         <Link 
                           to={`/admin/products/edit/${product.id}`}

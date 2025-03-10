@@ -6,86 +6,98 @@ service cloud.firestore {
       return request.auth != null;
     }
     
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
     function isAdmin() {
       return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        (getUserData().isAdmin == true || getUserData().role == 'admin');
+    }
+    
+    function isSystemOwner() {
+      return isAuthenticated() && getUserData().isOwner == true;
     }
     
     function isDistributor() {
       return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'distributor' &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approved == true;
+        getUserData().role == 'distributor' &&
+        getUserData().approved == true;
     }
     
     function isWholesale() {
       return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'wholesale' &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approved == true;
+        getUserData().role == 'wholesale' &&
+        getUserData().approved == true;
     }
     
-    function isOwner(userId) {
+    function isResourceOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role && getUserData().approved == true;
     }
     
     // Products collection
     match /products/{productId} {
       allow read: if true; // Anyone can read products
-      allow create, update, delete: if true; // Temporarily allow imports
+      allow create, update, delete: if isAdmin() || isSystemOwner(); // Only admins and owners can modify products
     }
     
     // Users collection
     match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
+      allow read: if isResourceOwner(userId) || isAdmin() || isSystemOwner();
       allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId) || isAdmin();
-      allow delete: if isAdmin();
+      allow update: if isResourceOwner(userId) || isAdmin() || isSystemOwner();
+      allow delete: if isAdmin() || isSystemOwner();
     }
     
     // Orders collection
     match /orders/{orderId} {
       allow read: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || // User's own orders
-        isAdmin() || // Admin can see all orders
+        isAdmin() || isSystemOwner() || // Admin and owner can see all orders
         (isDistributor() && resource.data.distributorId == request.auth.uid) || // Distributor assigned to the order
         (isWholesale() && resource.data.wholesalerId == request.auth.uid) // Wholesale buyer who referred the order
       );
       
       allow create: if isAuthenticated(); // Any authenticated user can create an order
       
-      allow update: if isAdmin() || 
+      allow update: if isAdmin() || isSystemOwner() || 
         (isDistributor() && resource.data.distributorId == request.auth.uid) || // Distributor can update their assigned orders
-        (isOwner(resource.data.userId) && resource.data.status == "pending"); // Users can update their own pending orders
+        (isResourceOwner(resource.data.userId) && resource.data.status == "pending"); // Users can update their own pending orders
       
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isSystemOwner();
     }
     
     // Transactions collection
     match /transactions/{transactionId} {
       allow read: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || // User's own transactions
-        isAdmin()
+        isAdmin() || isSystemOwner()
       );
       
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow update: if isAdmin() || isSystemOwner();
+      allow delete: if isAdmin() || isSystemOwner();
     }
     
     // Commissions collection
     match /commissions/{commissionId} {
       allow read: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || // User's own commissions
-        isAdmin()
+        isAdmin() || isSystemOwner()
       );
       
-      allow create, update: if isAdmin();
-      allow delete: if isAdmin();
+      allow create, update: if isAdmin() || isSystemOwner();
+      allow delete: if isAdmin() || isSystemOwner();
     }
     
     // Settings collection (for user roles, system config, etc.)
     match /settings/{settingId} {
       allow read: if true; // Anyone can read settings
-      allow write: if isAdmin(); // Only admins can modify settings
+      allow write: if isAdmin() || isSystemOwner(); // Only admins and owners can modify settings
     }
   }
 }
