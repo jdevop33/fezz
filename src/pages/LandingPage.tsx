@@ -250,7 +250,7 @@ function LandingPage() {
             <div className="bg-white dark:bg-surface-800 rounded-xl border border-surface-100 dark:border-surface-700 shadow-soft-xl overflow-hidden group">
               <div className="relative overflow-hidden">
                 <img 
-                  src="/images/products/peppermint-16mg.jpg" 
+                  src="/images/products/peppermint-16mg.png" 
                   alt="PUXX Intense Collection" 
                   className="w-full h-64 object-cover object-center transition-transform duration-500 group-hover:scale-105"
                 />
