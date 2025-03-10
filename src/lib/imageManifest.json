@@ -1,0 +1,40 @@
+{
+  "products": {
+    "apple-mint": {
+      "6": "/images/products/apple-mint-6mg.jpg",
+      "12": "/images/products/apple-mint-12mg.jpg",
+      "16": "/images/products/apple-mint-16mg.jpg",
+      "22": "/images/products/apple-mint-22mg.jpg"
+    },
+    "cherry": {
+      "6": "/images/products/cherry-6mg.jpg",
+      "16": "/images/products/cherry-16mg.jpg"
+    },
+    "cola": {
+      "12": "/images/products/cola-12mg.jpg",
+      "16": "/images/products/cola-16mg.jpg"
+    },
+    "cool-mint": {
+      "6": "/images/products/cool-mint-6mg.jpg",
+      "16": "/images/products/cool-mint-16mg.jpg"
+    },
+    "peppermint": {
+      "16": "/images/products/peppermint-16mg.jpg"
+    },
+    "spearmint": {
+      "6": "/images/products/spearmint-6mg.jpg",
+      "12": "/images/products/spearmint-12mg.jpg",
+      "16": "/images/products/spearmint-16mg.jpg",
+      "22": "/images/products/spearmint-22mg.jpg"
+    },
+    "watermelon": {
+      "6": "/images/products/watermelon-6mg.jpg",
+      "16": "/images/products/watermelon-16mg.jpg"
+    }
+  },
+  "banners": [
+    "/images/products/banner.jpg",
+    "/images/products/banner.png"
+  ],
+  "timestamp": "2025-03-10T05:40:29.356Z"
+}

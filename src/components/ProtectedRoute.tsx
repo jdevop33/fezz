@@ -1,60 +1,96 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { auth } from '../lib/firebase';
-import { getUser } from '../lib/pouchesDb';
+import { useAuth } from '../lib/hooks/useAuth';
+import { useUserRoles } from '../lib/hooks/useUserRoles';
+import { UserRole, Permission } from '../lib/userRoles';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  isAdmin?: boolean;
-  isOwner?: boolean;
+  requiredRole?: UserRole | UserRole[];
+  requiredPermission?: Permission | Permission[];
+  requiredFeature?: string;
+  redirectTo?: string;
+  isAdmin?: boolean; // For backward compatibility
+  isOwner?: boolean; // For backward compatibility
 }
 
-function ProtectedRoute({ children, isAdmin = false, isOwner = false }: ProtectedRouteProps) {
+function ProtectedRoute({ 
+  children, 
+  requiredRole, 
+  requiredPermission, 
+  requiredFeature,
+  redirectTo = "/dashboard", 
+  isAdmin = false, 
+  isOwner = false 
+}: ProtectedRouteProps) {
+  const { currentUser, loading: authLoading } = useAuth();
+  const { 
+    loading: rolesLoading, 
+    checkRole, 
+    checkPermission, 
+    checkAccess,
+    isAdmin: userIsAdmin,
+    isOwner: userIsOwner
+  } = useUserRoles();
+  
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    async function checkUserAccess() {
       try {
-        if (!user) {
-          setIsAuthenticated(false);
+        if (!currentUser) {
           setHasAccess(false);
           setLoading(false);
           return;
         }
 
-        setIsAuthenticated(true);
-
-        // If we need to check for special permissions
-        if (isAdmin || isOwner) {
-          const userProfile = await getUser(user.uid);
-          
-          if (isOwner) {
-            // Owner check takes precedence - owners should have access to everything
-            setHasAccess(userProfile?.isOwner === true);
-          } else if (isAdmin) {
-            // Admin check - either isAdmin or isOwner should grant access
-            setHasAccess(userProfile?.isAdmin === true || userProfile?.isOwner === true);
-          }
+        // Handle backward compatibility with isAdmin and isOwner props
+        if (isOwner) {
+          setHasAccess(userIsOwner);
+        } else if (isAdmin) {
+          setHasAccess(userIsAdmin || userIsOwner);
+        } 
+        // Check specific role, permission, or feature requirements
+        else if (requiredRole) {
+          setHasAccess(await checkRole(requiredRole));
+        } else if (requiredPermission) {
+          setHasAccess(await checkPermission(requiredPermission));
+        } else if (requiredFeature) {
+          setHasAccess(await checkAccess(requiredFeature));
         } else {
-          // Regular authenticated route
+          // If no specific requirements, just need to be authenticated
           setHasAccess(true);
         }
       } catch (error) {
-        console.error('Auth check error:', error);
-        setIsAuthenticated(false);
+        console.error('Access check error:', error);
         setHasAccess(false);
       } finally {
         setLoading(false);
       }
-    });
+    }
 
-    // Cleanup subscription
-    return () => unsubscribe();
-  }, [isAdmin, isOwner]);
+    if (!authLoading && !rolesLoading) {
+      checkUserAccess();
+    }
+  }, [
+    currentUser, 
+    authLoading, 
+    rolesLoading,
+    isAdmin, 
+    isOwner,
+    userIsAdmin,
+    userIsOwner,
+    requiredRole,
+    requiredPermission,
+    requiredFeature,
+    checkRole,
+    checkPermission,
+    checkAccess
+  ]);
 
-  if (loading) {
+  // Show loading spinner
+  if (authLoading || rolesLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -62,14 +98,17 @@ function ProtectedRoute({ children, isAdmin = false, isOwner = false }: Protecte
     );
   }
 
-  if (!isAuthenticated) {
+  // Redirect to login if not authenticated
+  if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
 
+  // Redirect to specified route if not authorized
   if (!hasAccess) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
+  // If authorized, render children
   return <>{children}</>;
 }
 

@@ -38,6 +38,7 @@ const ProductManagement = lazyWithSuspense(() => import('./pages/admin/ProductMa
 const CategoryManagement = lazyWithSuspense(() => import('./pages/admin/CategoryManagement'));
 const PendingApprovals = lazyWithSuspense(() => import('./pages/admin/PendingApprovals'));
 const AdminManagement = lazyWithSuspense(() => import('./pages/admin/AdminManagement'));
+const UserRoleManagement = lazyWithSuspense(() => import('./pages/admin/UserRoleManagement'));
 const SystemSettings = lazyWithSuspense(() => import('./pages/admin/SystemSettings'));
 const LoginPage = lazyWithSuspense(() => import('./pages/LoginPage'));
 const SetupPage = lazyWithSuspense(() => import('./pages/SetupPage'));
@@ -140,6 +141,10 @@ const router = createBrowserRouter([
       {
         path: "admins",
         element: <ProtectedRoute isOwner><AdminManagement /></ProtectedRoute>
+      },
+      {
+        path: "users",
+        element: <ProtectedRoute requiredPermission="manage_users"><UserRoleManagement /></ProtectedRoute>
       },
       {
         path: "system",

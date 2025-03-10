@@ -7,6 +7,7 @@ import { Product } from '../../lib/types';
 import { useProducts } from '../../lib/hooks';
 import { ProductFilters } from '../../contexts/ProductContext';
 import { toast } from 'sonner';
+import BannerImage from '../BannerImage';
 
 interface ProductCardProps {
   product: Product;
@@ -299,7 +300,7 @@ const ProductListingPage: React.FC = () => {
   
   // Get auth and cart functionality from hooks
   const { currentUser } = useAuth();
-  const { addToCart } = useCart();
+  const { addToCart, isItemInCart } = useCart();
   const { filterProducts, products: allProducts } = useProducts();
   
   // Check if user is admin or owner
@@ -481,16 +482,10 @@ const ProductListingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-surface-50">
       {/* Hero Banner */}
-      <div className="relative overflow-hidden bg-surface-900">
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="/images/products/banner.jpg" 
-            alt="Premium Nicotine Pouches" 
-            className="h-full w-full object-cover opacity-60"
-            loading="eager" // Load with high priority
-          />
-        </div>
-        <div className="relative z-10 mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <BannerImage 
+        alt="Premium Nicotine Pouches"
+        height="large"
+        overlayContent={
           <div className="max-w-2xl">
             <h1 className="mb-4 text-4xl font-bold tracking-tight text-white sm:text-5xl">Premium Nicotine Pouches</h1>
             <p className="text-lg text-white/80">Experience the highest quality tobacco-free nicotine pouches with our premium selection.</p>
@@ -514,8 +509,8 @@ const ProductListingPage: React.FC = () => {
               </button>
             </form>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* Content */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -706,7 +701,7 @@ const ProductListingPage: React.FC = () => {
                 {filteredProducts.map(product => (
                   <div key={product.id} className="relative">
                     {isAdmin && (
-                      <div className="absolute right-2 top-2 z-10 flex gap-1">
+                      <div className="absolute right-2 top-2 z-20 flex gap-1">
                         <Link 
                           to={`/admin/products/edit/${product.id}`}
                           className="rounded-md bg-white/90 p-1.5 text-surface-600 shadow-sm backdrop-blur-sm hover:bg-white hover:text-primary-600"
@@ -724,7 +719,12 @@ const ProductListingPage: React.FC = () => {
                         </button>
                       </div>
                     )}
-                    <ProductCard product={product} onAddToCart={handleAddToCart} />
+                    <ProductCard 
+                      product={product} 
+                      onAddToCart={handleAddToCart} 
+                      isWholesale={isWholesale}
+                      isInCart={isItemInCart(product.id)}
+                    />
                   </div>
                 ))}
               </div>
