@@ -10,11 +10,13 @@ interface ThemeProviderProps {
 
 interface ThemeProviderState {
   theme: Theme;
+  isDarkMode: boolean;
   setTheme: (theme: Theme) => void;
 }
 
 const initialState: ThemeProviderState = {
   theme: 'system',
+  isDarkMode: false,
   setTheme: () => null,
 };
 
@@ -29,6 +31,12 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
+  );
+  
+  // Track effective dark mode state
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(
+    theme === 'dark' || 
+    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   );
 
   useEffect(() => {
@@ -47,9 +55,46 @@ export function ThemeProvider({
     
     root.classList.add(theme);
   }, [theme]);
+  
+  // Add media query listener for system preference changes
+  useEffect(() => {
+    if (theme !== 'system') return;
+    
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      const root = window.document.documentElement;
+      root.classList.remove('light', 'dark');
+      root.classList.add(mediaQuery.matches ? 'dark' : 'light');
+      setIsDarkMode(mediaQuery.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [theme]);
+  
+  // Update isDarkMode whenever theme changes
+  useEffect(() => {
+    if (theme === 'dark') {
+      setIsDarkMode(true);
+    } else if (theme === 'light') {
+      setIsDarkMode(false);
+    } else {
+      setIsDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+  }, [theme]);
+
+  // Add HeadlessUI state attribute for proper dark mode rendering
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.setAttribute('data-headlessui-state', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-headlessui-state');
+    }
+  }, [isDarkMode]);
 
   const value = {
     theme,
+    isDarkMode,
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
