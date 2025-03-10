@@ -11,12 +11,16 @@
       "16": "/images/products/cherry-16mg.jpg"
     },
     "cola": {
+      "6": "/images/products/medium_puxxcola6mg_f367a82e22.jpg",
       "12": "/images/products/cola-12mg.jpg",
       "16": "/images/products/cola-16mg.jpg"
     },
     "cool-mint": {
       "6": "/images/products/cool-mint-6mg.jpg",
       "16": "/images/products/cool-mint-16mg.jpg"
+    },
+    "mango": {
+      "12": "/images/products/medium_bluegiant_mango_93cd1551a7.jpg"
     },
     "peppermint": {
       "16": "/images/products/peppermint-16mg.jpg"
@@ -32,9 +36,50 @@
       "16": "/images/products/watermelon-16mg.jpg"
     }
   },
+  "alternateImages": {
+    "apple-mint": {
+      "6": "/images/products/medium_puxx_applemint_6mg_70739f44d0.jpg",
+      "12": "/images/products/medium_puxxapplemint12mg_f391b4d132.jpg"
+    },
+    "cherry": {
+      "6": "/images/products/medium_puxx_cherry6mg_e27d099271.jpg"
+    },
+    "cool-mint": {
+      "6": "/images/products/medium_puxx_cool_mint_6mg_87473f081b.jpg"
+    },
+    "peppermint": {
+      "16": "/images/products/medium_puxxpeppermint16mg_3ad718421e.jpg"
+    },
+    "spearmint": {
+      "16": "/images/products/medium_puxxspearmint16mg_0b3d2a2b4f.jpg",
+      "22": "/images/products/medium_puxxspearmint22mg_70a51fcec3.jpg"
+    },
+    "watermelon": {
+      "6": "/images/products/medium_puxxwatermelon6mg_1e82f7d8f8.jpg"
+    }
+  },
   "banners": [
     "/images/products/banner.jpg",
-    "/images/products/banner.png"
+    "/images/products/banner.png",
+    "/images/products/rectban_301a0242af.jpeg",
+    "/images/products/card.jpeg"
   ],
-  "timestamp": "2025-03-10T05:40:29.356Z"
+  "placeholder": "/images/products/placeholder.svg",
+  "icons": {
+    "logo": [
+      "/images/products/logo.png",
+      "/images/products/logo (1).png"
+    ],
+    "misc": [
+      "/images/products/image.svg",
+      "/images/products/image (1).svg",
+      "/images/products/image (2).svg",
+      "/images/products/image (3).svg",
+      "/images/products/image (4).svg",
+      "/images/products/image (5).svg",
+      "/images/products/image (6).svg",
+      "/images/products/image (7).svg"
+    ]
+  },
+  "timestamp": "2025-03-10T10:30:00.000Z"
 }

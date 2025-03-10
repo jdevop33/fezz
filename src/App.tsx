@@ -66,6 +66,13 @@ const MainLayout = () => (
   </>
 );
 
+// Lazy load additional pages
+const AboutPage = lazyWithSuspense(() => import('./pages/AboutPage'));
+const FAQPage = lazyWithSuspense(() => import('./pages/FAQPage'));
+const CartPage = lazyWithSuspense(() => import('./pages/CartPage'));
+const CheckoutPage = lazyWithSuspense(() => import('./pages/CheckoutPage'));
+const OrdersPage = lazyWithSuspense(() => import('./pages/OrdersPage'));
+
 // Create router with future flags enabled
 const router = createBrowserRouter([
   {
@@ -89,6 +96,14 @@ const router = createBrowserRouter([
         element: <SetupPage />
       },
       {
+        path: "about",
+        element: <AboutPage />
+      },
+      {
+        path: "faq",
+        element: <FAQPage />
+      },
+      {
         path: "products",
         element: <ProductsPage />
       },
@@ -97,8 +112,20 @@ const router = createBrowserRouter([
         element: <ProductDetail />
       },
       {
+        path: "cart",
+        element: <CartPage />
+      },
+      {
+        path: "checkout",
+        element: <ProtectedRoute><CheckoutPage /></ProtectedRoute>
+      },
+      {
         path: "dashboard",
         element: <ProtectedRoute><DashboardPage /></ProtectedRoute>
+      },
+      {
+        path: "dashboard/orders",
+        element: <ProtectedRoute><OrdersPage /></ProtectedRoute>
       },
       {
         path: "*",

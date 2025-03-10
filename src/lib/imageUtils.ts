@@ -11,13 +11,13 @@ import imageManifest from './imageManifest.json';
 export function getProductImagePath(
   flavor: string, 
   strength: number, 
-  fallback: string = '/images/products/placeholder.svg'
+  fallback: string = imageManifest.placeholder || '/images/products/placeholder.svg'
 ): string {
   try {
     // Normalize flavor to lowercase with hyphens
     const normalizedFlavor = flavor.toLowerCase().replace(/\s+/g, '-');
     
-    // Check if flavor exists in manifest
+    // Check if flavor exists in main products manifest
     if (imageManifest.products[normalizedFlavor]) {
       // Check if strength exists for this flavor
       const strengthStr = String(strength);
@@ -36,7 +36,24 @@ export function getProductImagePath(
       }
     }
     
-    // If still not found, return a similar flavor with any strength
+    // Try alternate images if available
+    if (imageManifest.alternateImages && imageManifest.alternateImages[normalizedFlavor]) {
+      const strengthStr = String(strength);
+      if (imageManifest.alternateImages[normalizedFlavor][strengthStr]) {
+        return imageManifest.alternateImages[normalizedFlavor][strengthStr];
+      }
+      
+      // If exact strength not found in alternates, try to find closest strength
+      const availableAlternateStrengths = Object.keys(imageManifest.alternateImages[normalizedFlavor]).map(Number);
+      if (availableAlternateStrengths.length > 0) {
+        const closestStrength = availableAlternateStrengths.reduce((prev, curr) => 
+          Math.abs(curr - strength) < Math.abs(prev - strength) ? curr : prev
+        );
+        return imageManifest.alternateImages[normalizedFlavor][String(closestStrength)];
+      }
+    }
+    
+    // If still not found, try to find a similar flavor with any strength
     const similarFlavors = Object.keys(imageManifest.products)
       .filter(f => f.includes(normalizedFlavor) || normalizedFlavor.includes(f));
     

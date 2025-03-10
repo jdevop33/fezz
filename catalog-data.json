@@ -1,6 +1,19 @@
 {
   "products": [
     {
+      "flavor": "Mango",
+      "itemPN": "Mango-12",
+      "price": 24.99,
+      "active": true,
+      "category": "nicotine-pouches",
+      "description": "Tobacco Free Nicotine Pouch, 12mg/pouch",
+      "imageUrl": "/images/products/medium_bluegiant_mango_93cd1551a7.jpg",
+      "inventoryCount": 5000,
+      "strength": 12,
+      "wholesalePrice": 19.99,
+      "isNew": true
+    },
+    {
       "flavor": "Apple mint",
       "itemPN": "Apple mint-6",
       "price": 24.99,
@@ -38,6 +51,18 @@
     },
     {
       "flavor": "Cola",
+      "itemPN": "Cola-6",
+      "price": 24.99,
+      "active": true,
+      "category": "nicotine-pouches",
+      "description": "Tobacco Free Nicotine Pouch, 6mg/pouch",
+      "imageUrl": "/images/products/medium_puxxcola6mg_f367a82e22.jpg",
+      "inventoryCount": 5000,
+      "strength": 6,
+      "wholesalePrice": 19.99
+    },
+    {
+      "flavor": "Cola",
       "itemPN": "Cola-12",
       "price": 24.99,
       "active": true,
@@ -56,6 +81,18 @@
       "category": "nicotine-pouches",
       "description": "Tobacco Free Nicotine Pouch, 16mg/pouch",
       "imageUrl": "/images/products/cola-16mg.jpg",
+      "inventoryCount": 5000,
+      "strength": 16,
+      "wholesalePrice": 19.99
+    },
+    {
+      "flavor": "Peppermint",
+      "itemPN": "Peppermint-16",
+      "price": 24.99,
+      "active": true,
+      "category": "nicotine-pouches",
+      "description": "Tobacco Free Nicotine Pouch, 16mg/pouch",
+      "imageUrl": "/images/products/peppermint-16mg.jpg",
       "inventoryCount": 5000,
       "strength": 16,
       "wholesalePrice": 19.99
