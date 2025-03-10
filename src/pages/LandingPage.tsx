@@ -130,7 +130,7 @@ function LandingPage() {
               <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-surface-900 to-surface-800 shadow-2xl aspect-square max-w-lg mx-auto">
                 {/* Premium product image */}
                 <img 
-                  src="/images/products/card.jpeg" 
+                  src="/images/products/spearmint-16mg.png" 
                   alt="PUXX Premium Nicotine Pouches" 
                   className="object-contain w-full h-full p-8"
                 />
