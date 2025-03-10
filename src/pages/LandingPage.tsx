@@ -415,7 +415,7 @@ function LandingPage() {
                 {/* Main craftsmanship image */}
                 <div className="rounded-2xl overflow-hidden shadow-2xl">
                   <img 
-                    src="/images/products/medium_puxx_applemint_6mg_70739f44d0.jpg" 
+                    src="/images/products/medium_puxx_applemint_6mg_70739f44d0.png" 
                     alt="PUXX Craftsmanship Process" 
                     className="w-full h-auto"
                   />
