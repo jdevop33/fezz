@@ -1,5 +1,4 @@
 import React from 'react';
-import { CreditCard } from 'lucide-react';
 
 /**
  * ProductPaymentIcons Component

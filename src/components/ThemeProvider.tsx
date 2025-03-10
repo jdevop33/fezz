@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -63,13 +63,5 @@ export function ThemeProvider({
   );
 }
 
-// Export the useTheme hook directly from this file
-export function useTheme() {
-  const context = useContext(ThemeProviderContext);
-  
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-    
-  return context;
-}
+// The useTheme hook is moved to src/lib/hooks/useTheme.ts
+// for better React Fast Refresh compatibility

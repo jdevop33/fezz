@@ -12,7 +12,6 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { User } from './types';
 
 // Sample product data based on the nicotine pouches inventory
 const sampleProducts: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>[] = [

@@ -14,17 +14,16 @@ const PageLoader = () => (
 );
 
 // Wrap lazy components with Suspense
-const lazyWithSuspense = <P extends {}>(
+const lazyWithSuspense = <P extends object>(
   importFn: () => Promise<{ default: React.ComponentType<P> }>
 ) => {
   const LazyComponent = lazy(importFn);
   
-  // Use "any" just for the component props spread, which is safe in this context
-  // because we know LazyComponent expects props of type P
+  // TypeScript knows LazyComponent expects props of type P
   return function WithSuspense(props: P): JSX.Element {
     return (
       <Suspense fallback={<PageLoader />}>
-        <LazyComponent {...(props as any)} />
+        <LazyComponent {...props} />
       </Suspense>
     );
   };
