@@ -7,7 +7,7 @@
       "active": true,
       "category": "nicotine-pouches",
       "description": "Tobacco Free Nicotine Pouch, 12mg/pouch",
-      "imageUrl": "/images/products/medium_bluegiant_mango_93cd1551a7.jpg",
+      "imageUrl": "/images/products/medium_bluegiant_mango_93cd1551a7.png",
       "inventoryCount": 5000,
       "strength": 12,
       "wholesalePrice": 19.99,
@@ -20,7 +20,7 @@
       "active": true,
       "category": "nicotine-pouches",
       "description": "Tobacco Free Nicotine Pouch, 6mg/pouch",
-      "imageUrl": "/images/products/apple-mint-6mg.jpg",
+      "imageUrl": "/images/products/apple-mint-6mg.png",
       "inventoryCount": 10000,
       "strength": 6,
       "wholesalePrice": 19.99
