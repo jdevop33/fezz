@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Plus, Minus, Mail, HelpCircle } from 'lucide-react';
+import { Plus, Minus, Mail } from 'lucide-react';
 
 // FAQ item interface
 interface FAQItem {

@@ -114,7 +114,7 @@ const OrdersPage: React.FC = () => {
           setOrders(mockOrders);
           setLoading(false);
         }, 800); // Simulate network delay
-      } catch (err) {
+      } catch {
         setError('Failed to load your orders. Please try again later.');
         setLoading(false);
       }

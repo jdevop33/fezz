@@ -28,7 +28,7 @@ const BannerImage: React.FC<BannerImageProps> = ({
   index,
 }) => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [, setError] = useState(false);
   
   // Get banner source - either provided or from the manifest
   const bannerSrc = src || getBannerImagePath(index);

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, ShoppingCart, Star, Filter, X, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { useCart } from '../../lib/hooks';
-import { useAuth } from '../../lib/hooks';
 import { useUserRoles } from '../../lib/hooks';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Product, User } from '../../lib/types';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Product } from '../../lib/types';
 import { useProducts } from '../../lib/hooks';
 import { ProductFilters } from '../../contexts/ProductContext';
 import { toast } from 'sonner';
@@ -17,7 +16,6 @@ interface ProductCardProps {
 
 // ProductCard component for individual product display with wholesale pricing support
 const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
-  const { currentUser } = useAuth();
   const { isItemInCart } = useCart();
   
   // Use userProfile from useUserRoles to get the role
@@ -294,15 +292,11 @@ const FilterSidebar = ({ isOpen, onClose, flavors, strengths, selectedFilters, o
 
 const ProductListingPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  // Use navigate for redirection when needed
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const navigate = useNavigate();
   const category = searchParams.get('category');
   const searchQuery = searchParams.get('search');
   const sortParam = searchParams.get('sort');
   
   // Get auth and cart functionality from hooks
-  const { currentUser } = useAuth();
   const { addToCart, isItemInCart } = useCart();
   const { filterProducts, products: allProducts } = useProducts();
   const { userProfile, isAdmin, isOwner } = useUserRoles();

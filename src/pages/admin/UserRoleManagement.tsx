@@ -8,8 +8,7 @@ import {
 } from '../../lib/userRoles';
 import { User } from '../../lib/types';
 import { useUserRoles } from '../../lib/hooks/useUserRoles';
-import RoleBasedAccess from '../../components/RoleBasedAccess';
-import { Plus, Edit, UserCheck, UserX, AlertCircle, Search, ChevronDown, Trash } from 'lucide-react';
+import { Edit, UserCheck, UserX, AlertCircle, Search, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 const UserRoleManagement: React.FC = () => {
@@ -24,7 +23,7 @@ const UserRoleManagement: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editRole, setEditRole] = useState<string>('');
-  const [notes, setNotes] = useState('');
+  const [notes] = useState('');
 
   // Load users based on filter
   useEffect(() => {
@@ -47,7 +46,7 @@ const UserRoleManagement: React.FC = () => {
           setPendingUsers(fetchedUsers);
           return; // Don't set as regular users
         } else {
-          fetchedUsers = await getUsersBySpecificRole(filter as any);
+          fetchedUsers = await getUsersBySpecificRole(filter as 'retail' | 'wholesale' | 'distributor' | 'admin' | 'owner');
         }
         
         setUsers(fetchedUsers);
@@ -91,13 +90,13 @@ const UserRoleManagement: React.FC = () => {
     if (!selectedUser || !editRole) return;
     
     try {
-      await changeUserRole(selectedUser.id, editRole as any);
+      await changeUserRole(selectedUser.id, editRole as 'retail' | 'wholesale' | 'distributor' | 'admin' | 'owner');
       toast.success(`Role updated for ${selectedUser.displayName || selectedUser.email}`);
       
       // Update user in the list
       setUsers(users.map(user => 
         user.id === selectedUser.id 
-          ? { ...user, role: editRole as any, isAdmin: editRole === 'admin', isOwner: editRole === 'owner' } 
+          ? { ...user, role: editRole as 'retail' | 'wholesale' | 'distributor' | 'admin' | 'owner', isAdmin: editRole === 'admin', isOwner: editRole === 'owner' } 
           : user
       ));
       

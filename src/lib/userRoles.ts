@@ -1,7 +1,7 @@
 import { auth } from './firebase';
 import { User as FirebaseUser } from 'firebase/auth';
 import { User } from './types';
-import { getUser, updateUser, getUsersByRole, approveUserAccount, queryDocuments, COLLECTIONS } from './pouchesDb';
+import { getUser, updateUser, getUsersByRole, queryDocuments, COLLECTIONS } from './pouchesDb';
 import { where, orderBy } from 'firebase/firestore';
 
 /**
@@ -188,7 +188,7 @@ export async function changeUserRole(userId: string, newRole: UserRole): Promise
   }
   
   // Update role
-  let updates: Partial<User> = { role: newRole };
+  const updates: Partial<User> = { role: newRole };
   
   // Special handling for admin/owner status
   if (newRole === 'admin') {
