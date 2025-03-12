@@ -14,13 +14,16 @@ const PageLoader = () => (
 );
 
 // Wrap lazy components with Suspense
-const lazyWithSuspense = <P extends object>(
-  importFn: () => Promise<{ default: React.ComponentType<P> }>
+// This approach ensures proper typing for React components with full prop support
+const lazyWithSuspense = <T extends React.ComponentType<React.PropsWithChildren<object>>>(
+  importFn: () => Promise<{ default: T }>
 ) => {
   const LazyComponent = lazy(importFn);
   
-  // TypeScript knows LazyComponent expects props of type P
-  return function WithSuspense(props: P): JSX.Element {
+  // Use ComponentPropsWithRef to extract the proper prop types from the component
+  return function WithSuspense(
+    props: React.ComponentPropsWithRef<T>
+  ): JSX.Element {
     return (
       <Suspense fallback={<PageLoader />}>
         <LazyComponent {...props} />
