@@ -8,6 +8,8 @@ import { useCart } from '../../lib/hooks';
 import { useAuth } from '../../lib/hooks';
 import { getUser } from '../../lib/pouchesDb';
 import ProductPaymentIcons from './ProductPaymentIcons';
+import ProductImage from './ProductImage';
+import { getProductImagePath } from '../../lib/imageUtils';
 
 // Import the actual Product type from types.ts
 import type { Product as ProductType } from '../../lib/types';
@@ -51,7 +53,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { addToCart, updateQuantity } = useCart();
   const { currentUser } = useAuth();
-  
+
   // State
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -70,7 +72,7 @@ const ProductDetail = () => {
         setIsAdmin(false);
       }
     };
-    
+
     checkAdminStatus();
   }, [currentUser]);
 
@@ -87,53 +89,53 @@ const ProductDetail = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       if (!productId) return;
-      
+
       try {
         setLoading(true);
-        
+
         const docRef = doc(db, 'products', productId);
         const docSnap = await getDoc(docRef);
-        
+
         if (docSnap.exists()) {
           const productData = { id: docSnap.id, ...docSnap.data() } as Product;
           setProduct(productData);
-          
+
           // Fetch related products with same category
           // In production, you'd use a query with where() to get related products
           // For demonstration purposes we're using dummy data
           const dummyRelated = [
-            { 
-              id: 'cherry-6mg', 
+            {
+              id: 'cherry-6mg',
               flavor: 'Cherry',
               strength: 6,
-              price: 24.99, 
-              imageUrl: '/images/products/cherry-6mg.jpg', 
-              rating: 4.5, 
+              price: 24.99,
+              imageUrl: getProductImagePath('Cherry', 6, 'medium'),
+              rating: 4.5,
               reviewCount: 28,
               category: 'nicotine-pouches'
             },
-            { 
-              id: 'apple-mint-12mg', 
+            {
+              id: 'apple-mint-12mg',
               flavor: 'Apple mint',
               strength: 12,
-              price: 24.99, 
-              imageUrl: '/images/products/apple-mint-12mg.jpg', 
-              rating: 4.7, 
+              price: 24.99,
+              imageUrl: getProductImagePath('Apple mint', 12, 'medium'),
+              rating: 4.7,
               reviewCount: 35,
               category: 'nicotine-pouches'
             },
-            { 
-              id: 'cola-16mg', 
+            {
+              id: 'cola-16mg',
               flavor: 'Cola',
               strength: 16,
-              price: 24.99, 
-              imageUrl: '/images/products/cola-16mg.jpg', 
-              rating: 4.3, 
+              price: 24.99,
+              imageUrl: getProductImagePath('Cola', 16, 'medium'),
+              rating: 4.3,
               reviewCount: 19,
               category: 'nicotine-pouches'
             }
           ];
-          
+
           setRelatedProducts([...dummyRelated, productData]);
         } else {
           setError('Product not found');
@@ -163,13 +165,13 @@ const ProductDetail = () => {
   // Handlers
   const handleAddToCart = () => {
     if (!product) return;
-    
+
     // Check if product is in stock
     if (product.inventoryCount !== undefined && product.inventoryCount <= 0) {
       toast.error('This product is currently out of stock');
       return;
     }
-    
+
     // First add the base item - we use the "name" property as expected by the addToCart function
     // Note: product.itemPN is mapped to "name" parameter which is what the cart expects
     addToCart({
@@ -184,7 +186,7 @@ const ProductDetail = () => {
       description: product.description,
       wholesalePrice: product.wholesalePrice || product.price * 0.8
     });
-    
+
     // Set the proper quantity if more than 1
     if (quantity > 1) {
       // Short timeout to ensure the item is added before updating quantity
@@ -197,15 +199,15 @@ const ProductDetail = () => {
   const handleQuantityChange = (value: number) => {
     // Get maximum available based on inventory (default to 10 if not specified)
     const maxAvailable = product?.inventoryCount !== undefined
-      ? Math.min(10, product.inventoryCount) 
+      ? Math.min(10, product.inventoryCount)
       : 10;
-      
+
     // Ensure quantity stays between 1 and maxAvailable
     const newQuantity = Math.max(1, Math.min(maxAvailable, quantity + value));
-    
+
     if (newQuantity !== quantity) {
       setQuantity(newQuantity);
-      
+
       // Show feedback if we hit a limit
       if (newQuantity === maxAvailable && value > 0) {
         toast.info(`Maximum quantity of ${maxAvailable} reached`);
@@ -226,7 +228,7 @@ const ProductDetail = () => {
   // Generate product features based on product data
   const getProductFeatures = () => {
     if (!product) return [];
-    
+
     return [
       'Tobacco-free nicotine pouches',
       `${product.strength}mg strength ${product.strength > 12 ? 'for experienced users' : 'for casual users'}`,
@@ -269,13 +271,19 @@ const ProductDetail = () => {
     );
   }
 
-  // Product images
+  // Product images - use the main image and alternate images if available
+  const mainImage = product.imageUrl || getProductImagePath(product.flavor, product.strength, 'large');
+
+  // For thumbnails, we'll use the same image but in different sizes if available
   const productImages = [
-    product.imageUrl,
-    product.imageUrl,
-    product.imageUrl,
-    product.imageUrl
-  ].filter(Boolean) as string[];
+    mainImage,
+    getProductImagePath(product.flavor, product.strength, 'medium'),
+    getProductImagePath(product.flavor, product.strength, 'small'),
+    getProductImagePath(product.flavor, product.strength, 'thumbnail')
+  ].filter((img, index, self) =>
+    // Remove duplicates and empty strings
+    img && self.indexOf(img) === index
+  ) as string[];
 
   return (
     <div className="bg-white">
@@ -306,13 +314,18 @@ const ProductDetail = () => {
           {/* Product images */}
           <div className="mb-8 lg:mb-0">
             <div className="overflow-hidden rounded-lg bg-surface-100">
-              <img
-                src={productImages[selectedImage] || '/images/products/image.svg'}
-                alt={product.flavor}
-                className="h-full w-full object-cover object-center"
+              <ProductImage
+                src={productImages[selectedImage]}
+                alt={`${product.flavor} ${product.strength}mg`}
+                size="large"
+                aspectRatio="1:1"
+                objectFit="contain"
+                flavor={product.flavor}
+                strength={product.strength}
+                className="h-full w-full"
               />
             </div>
-            
+
             {/* Image thumbnails */}
             {productImages.length > 1 && (
               <div className="mt-4 grid grid-cols-4 gap-4">
@@ -321,17 +334,22 @@ const ProductDetail = () => {
                     key={index}
                     onClick={() => setSelectedImage(index)}
                     className={`overflow-hidden rounded-md ${
-                      selectedImage === index 
-                        ? 'ring-2 ring-primary-500' 
+                      selectedImage === index
+                        ? 'ring-2 ring-primary-500'
                         : 'ring-1 ring-surface-200'
                     }`}
                     aria-label={`View image ${index + 1} of product`}
                     tabIndex={0}
                   >
-                    <img
+                    <ProductImage
                       src={image}
                       alt={`${product.flavor} thumbnail ${index + 1}`}
-                      className="h-16 w-full object-cover object-center"
+                      size="thumbnail"
+                      aspectRatio="1:1"
+                      objectFit="contain"
+                      flavor={product.flavor}
+                      strength={product.strength}
+                      className="h-16 w-full"
                     />
                   </button>
                 ))}
@@ -344,18 +362,18 @@ const ProductDetail = () => {
             <div className="mb-6">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-surface-900 sm:text-3xl">{product.flavor} {product.strength}mg</h1>
-                
+
                 {/* Admin controls */}
                 {isAdmin && (
                   <div className="flex items-center gap-2">
-                    <Link 
+                    <Link
                       to={`/admin/products/edit/${product.id}`}
                       className="rounded-md bg-primary-600 p-2 text-white hover:bg-primary-700"
                       title="Edit product"
                     >
                       <Edit size={16} />
                     </Link>
-                    <button 
+                    <button
                       className="rounded-md bg-surface-200 p-2 text-surface-700 hover:bg-red-100 hover:text-red-600"
                       title="Delete product"
                     >
@@ -364,16 +382,16 @@ const ProductDetail = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Rating */}
               <div className="mt-2 flex items-center">
                 <div className="flex text-warning-400">
                   {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      size={16} 
-                      fill={i < Math.floor(product.rating || 4.5) ? "currentColor" : "none"} 
-                      className={i < Math.floor(product.rating || 4.5) ? "text-warning-400" : "text-surface-300"} 
+                    <Star
+                      key={i}
+                      size={16}
+                      fill={i < Math.floor(product.rating || 4.5) ? "currentColor" : "none"}
+                      className={i < Math.floor(product.rating || 4.5) ? "text-warning-400" : "text-surface-300"}
                     />
                   ))}
                 </div>
@@ -403,7 +421,7 @@ const ProductDetail = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2 mt-2">
                   {product.inventoryCount === undefined || product.inventoryCount > 10 ? (
                     <div className="flex items-center text-success-600">
@@ -421,7 +439,7 @@ const ProductDetail = () => {
                       <p className="text-sm font-medium">Out of stock</p>
                     </div>
                   )}
-                  
+
                   {isAdmin && (
                     <span className="ml-auto rounded-full bg-surface-200 px-2.5 py-0.5 text-xs font-medium text-surface-700 border border-surface-300">
                       Inventory: {product.inventoryCount || 0} units
@@ -429,7 +447,7 @@ const ProductDetail = () => {
                   )}
                 </div>
               </div>
-              
+
               {/* Decorative element for visual interest */}
               <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-primary-100 opacity-50"></div>
               <div className="absolute -left-6 -bottom-6 h-12 w-12 rounded-full bg-surface-200 opacity-40"></div>
@@ -440,32 +458,32 @@ const ProductDetail = () => {
               <div className="px-4 py-3 bg-gradient-to-r from-surface-100 to-surface-50 border-b border-surface-200">
                 <h3 className="text-sm font-semibold text-surface-900">About This Product</h3>
               </div>
-              
+
               <div className="p-4">
                 <div className={`prose prose-surface max-w-none ${!readMore && 'line-clamp-3'}`}>
                   <p className="text-surface-700 leading-relaxed">
                     {product.description || `Experience the fresh sensation of premium ${product.flavor.toLowerCase()} with PUXX ${product.strength > 12 ? 'Strong' : 'Light'}. These tobacco-free nicotine pouches deliver a ${product.strength > 12 ? 'powerful' : 'satisfying'} experience with a clean, refreshing flavor that lasts longer.`}
                   </p>
                 </div>
-                
+
                 <div className="mt-3 flex items-center">
-                  <button 
+                  <button
                     onClick={() => setReadMore(!readMore)}
                     className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
                     aria-label={readMore ? "Show less details" : "Show more details"}
                     tabIndex={0}
                   >
                     <span>{readMore ? 'Show less' : 'Show more'}</span>
-                    <svg 
-                      className={`ml-1 h-4 w-4 transform transition-transform duration-200 ${readMore ? 'rotate-180' : ''}`} 
-                      fill="none" 
-                      viewBox="0 0 24 24" 
+                    <svg
+                      className={`ml-1 h-4 w-4 transform transition-transform duration-200 ${readMore ? 'rotate-180' : ''}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
                       stroke="currentColor"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  
+
                   {/* Subtle badge indicating content */}
                   <span className="ml-auto inline-flex items-center rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-700">
                     Product Details
@@ -518,7 +536,7 @@ const ProductDetail = () => {
                 <h3 className="text-sm font-semibold text-surface-900">Quantity</h3>
                 <span className="text-xs text-surface-500 italic">Select how many pouches to add</span>
               </div>
-              
+
               <div className="flex items-center">
                 <button
                   onClick={() => handleQuantityChange(-1)}
@@ -533,7 +551,7 @@ const ProductDetail = () => {
                     -1
                   </span>
                 </button>
-                
+
                 <div className="relative group">
                   <input
                     type="text"
@@ -548,7 +566,7 @@ const ProductDetail = () => {
                     </span>
                   </div>
                 </div>
-                
+
                 <button
                   onClick={() => handleQuantityChange(1)}
                   disabled={quantity >= (product?.inventoryCount !== undefined ? Math.min(10, product.inventoryCount) : 10)}
@@ -563,11 +581,11 @@ const ProductDetail = () => {
                   </span>
                 </button>
               </div>
-              
+
               {/* Maximum quantity indicator */}
               <div className="mt-2 flex justify-end">
                 <span className="text-xs text-surface-500">
-                  {product.inventoryCount !== undefined && 
+                  {product.inventoryCount !== undefined &&
                     `Maximum ${Math.min(10, product.inventoryCount)} per order`}
                 </span>
               </div>
@@ -650,7 +668,7 @@ const ProductDetail = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Payment Methods */}
               <div className="mt-6">
                 <h3 className="text-sm font-medium text-surface-900 mb-3">Payment Methods</h3>
@@ -673,10 +691,15 @@ const ProductDetail = () => {
                 .map((relatedProduct) => (
                   <div key={relatedProduct.id} className="group relative">
                     <div className="overflow-hidden rounded-lg bg-surface-100">
-                      <img
-                        src={relatedProduct.imageUrl || '/images/products/image.svg'}
-                        alt={relatedProduct.flavor}
-                        className="h-48 w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                      <ProductImage
+                        src={relatedProduct.imageUrl}
+                        alt={`${relatedProduct.flavor} ${relatedProduct.strength}mg`}
+                        size="medium"
+                        aspectRatio="1:1"
+                        objectFit="contain"
+                        flavor={relatedProduct.flavor}
+                        strength={relatedProduct.strength}
+                        className="h-48 w-full transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div className="mt-4">
@@ -686,11 +709,11 @@ const ProductDetail = () => {
                       <div className="mt-1 flex items-center">
                         <div className="flex text-warning-400">
                           {[...Array(5)].map((_, i) => (
-                            <Star 
-                              key={i} 
-                              size={12} 
-                              fill={i < Math.floor(relatedProduct.rating || 4.5) ? "currentColor" : "none"} 
-                              className={i < Math.floor(relatedProduct.rating || 4.5) ? "text-warning-400" : "text-surface-300"} 
+                            <Star
+                              key={i}
+                              size={12}
+                              fill={i < Math.floor(relatedProduct.rating || 4.5) ? "currentColor" : "none"}
+                              className={i < Math.floor(relatedProduct.rating || 4.5) ? "text-warning-400" : "text-surface-300"}
                             />
                           ))}
                         </div>

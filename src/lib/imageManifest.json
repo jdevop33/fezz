@@ -1,39 +1,41 @@
 {
   "products": {
     "apple-mint": {
-      "6": "/images/products/apple-mint-6mg.jpg",
-      "12": "/images/products/apple-mint-12mg.jpg",
+      "6": "/images/products/apple-mint-6mg.png",
+      "12": "/images/products/apple-mint-12mg.png",
       "16": "/images/products/apple-mint-16mg.jpg",
       "22": "/images/products/apple-mint-22mg.jpg"
     },
     "cherry": {
       "6": "/images/products/cherry-6mg.jpg",
-      "16": "/images/products/cherry-16mg.jpg"
+      "16": "/images/products/puxcherry16mg-650x650.png"
     },
     "cola": {
       "6": "/images/products/medium_puxxcola6mg_f367a82e22.jpg",
       "12": "/images/products/cola-12mg.jpg",
-      "16": "/images/products/cola-16mg.jpg"
+      "16": "/images/products/puxxcola16mg.png"
     },
     "cool-mint": {
-      "6": "/images/products/cool-mint-6mg.jpg",
-      "16": "/images/products/cool-mint-16mg.jpg"
+      "6": "/images/products/cool-mint-6mg.png",
+      "16": "/images/products/cool-mint-16mg.jpg",
+      "22": "/images/products/puxxcoolmint22mg.png"
     },
     "mango": {
-      "12": "/images/products/medium_bluegiant_mango_93cd1551a7.jpg"
+      "12": "/images/products/medium_bluegiant_mango_93cd1551a7.png"
     },
     "peppermint": {
-      "16": "/images/products/peppermint-16mg.jpg"
+      "16": "/images/products/peppermint-16mg.png",
+      "22": "/images/products/puxxperpermint22mg.png"
     },
     "spearmint": {
       "6": "/images/products/spearmint-6mg.jpg",
       "12": "/images/products/spearmint-12mg.jpg",
-      "16": "/images/products/spearmint-16mg.jpg",
-      "22": "/images/products/spearmint-22mg.jpg"
+      "16": "/images/products/spearmint-16mg.png",
+      "22": "/images/products/puxxspearmint22mg.png"
     },
     "watermelon": {
       "6": "/images/products/watermelon-6mg.jpg",
-      "16": "/images/products/watermelon-16mg.jpg"
+      "16": "/images/products/puxxwatermelon16mg.png"
     }
   },
   "alternateImages": {
@@ -42,27 +44,71 @@
       "12": "/images/products/medium_puxxapplemint12mg_f391b4d132.jpg"
     },
     "cherry": {
-      "6": "/images/products/medium_puxx_cherry6mg_e27d099271.jpg"
+      "6": "/images/products/medium_puxx_cherry6mg_e27d099271.jpg",
+      "16": "/images/products/puxcherry16mg-768x768.png"
+    },
+    "cola": {
+      "6": "/images/products/medium_puxxcola6mg_f367a82e22.jpg",
+      "16": [
+        "/images/products/puxxcola16mg-100x100.png",
+        "/images/products/puxxcola16mg-150x150.png",
+        "/images/products/puxxcola16mg-300x300.png",
+        "/images/products/puxxcola16mg-600x600.png",
+        "/images/products/puxxcola16mg-650x650.png",
+        "/images/products/puxxcola16mg-768x768.png"
+      ]
     },
     "cool-mint": {
-      "6": "/images/products/medium_puxx_cool_mint_6mg_87473f081b.jpg"
+      "6": "/images/products/medium_puxx_cool_mint_6mg_87473f081b.jpg",
+      "22": [
+        "/images/products/puxxcoolmint22mg-100x100.png",
+        "/images/products/puxxcoolmint22mg-150x150.png",
+        "/images/products/puxxcoolmint22mg-300x300.png",
+        "/images/products/puxxcoolmint22mg-600x600.png",
+        "/images/products/puxxcoolmint22mg-650x650.png",
+        "/images/products/puxxcoolmint22mg-768x768.png"
+      ]
     },
     "peppermint": {
-      "16": "/images/products/medium_puxxpeppermint16mg_3ad718421e.jpg"
+      "16": "/images/products/medium_puxxpeppermint16mg_3ad718421e.jpg",
+      "22": [
+        "/images/products/puxxperpermint22mg-100x100.png",
+        "/images/products/puxxperpermint22mg-300x300.png",
+        "/images/products/puxxperpermint22mg-600x600.png",
+        "/images/products/puxxperpermint22mg-650x650.png",
+        "/images/products/puxxperpermint22mg-768x768.png"
+      ]
     },
     "spearmint": {
       "16": "/images/products/medium_puxxspearmint16mg_0b3d2a2b4f.jpg",
-      "22": "/images/products/medium_puxxspearmint22mg_70a51fcec3.jpg"
+      "22": [
+        "/images/products/puxxspearmint22mg-100x100.png",
+        "/images/products/puxxspearmint22mg-150x150.png",
+        "/images/products/puxxspearmint22mg-300x300.png",
+        "/images/products/puxxspearmint22mg-600x600.png",
+        "/images/products/puxxspearmint22mg-650x650.png",
+        "/images/products/puxxspearmint22mg-768x768.png"
+      ]
     },
     "watermelon": {
-      "6": "/images/products/medium_puxxwatermelon6mg_1e82f7d8f8.jpg"
+      "6": "/images/products/medium_puxxwatermelon6mg_1e82f7d8f8.jpg",
+      "16": [
+        "/images/products/puxxwatermelon16mg-100x100.png",
+        "/images/products/puxxwatermelon16mg-150x150.png",
+        "/images/products/puxxwatermelon16mg-300x300.png",
+        "/images/products/puxxwatermelon16mg-600x600.png",
+        "/images/products/puxxwatermelon16mg-650x650.png",
+        "/images/products/puxxwatermelon16mg-768x768.png"
+      ]
     }
   },
   "banners": [
     "/images/products/banner.jpg",
     "/images/products/banner.png",
+    "/images/products/puxx-banner-fruit.png",
     "/images/products/rectban_301a0242af.jpeg",
-    "/images/products/card.jpeg"
+    "/images/products/card.jpeg",
+    "/images/products/hero.png"
   ],
   "placeholder": "/images/products/placeholder.svg",
   "icons": {

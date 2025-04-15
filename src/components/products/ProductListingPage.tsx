@@ -8,6 +8,8 @@ import { useProducts } from '../../lib/hooks';
 import { ProductFilters } from '../../contexts/ProductContext';
 import { toast } from 'sonner';
 import BannerImage from '../BannerImage';
+import ProductImage from './ProductImage';
+import { getProductImagePath } from '../../lib/imageUtils';
 
 interface ProductCardProps {
   product: Product;
@@ -17,7 +19,7 @@ interface ProductCardProps {
 // ProductCard component for individual product display with wholesale pricing support
 const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const { isItemInCart } = useCart();
-  
+
   // Use userProfile from useUserRoles to get the role
   const { userProfile } = useUserRoles();
   // Check if user is wholesale/distributor for pricing
@@ -46,14 +48,14 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           OUT OF STOCK
         </div>
       )}
-      
+
       {/* Wholesale badge */}
       {isWholesale && product.wholesalePrice && (
         <div className="absolute left-2 top-2 z-10 rounded bg-green-500 px-2 py-1 text-xs font-bold text-white">
           WHOLESALE
         </div>
       )}
-      
+
       {/* New badge */}
       {product.isNew && !isWholesale && (
         <div className="absolute left-2 top-2 z-10 rounded bg-primary-500 px-2 py-1 text-xs font-bold text-white">
@@ -62,7 +64,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
       )}
 
       {/* Wishlist button */}
-      <button 
+      <button
         className="absolute right-2 top-2 z-10 rounded-full bg-white/80 p-1.5 text-surface-500 backdrop-blur transition-colors hover:bg-white hover:text-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500"
         aria-label={`Add ${product.itemPN} to favorites`}
       >
@@ -72,22 +74,22 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
       </button>
 
       {/* Product image with link */}
-      <Link 
-        to={`/products/${product.id}`} 
+      <Link
+        to={`/products/${product.id}`}
         className="group relative flex h-48 items-center justify-center overflow-hidden bg-surface-100 p-4"
         aria-label={`View details for ${product.itemPN}`}
       >
-        <img 
-          src={product.imageUrl || "/images/placeholder-product.jpg"} 
-          alt={product.flavor} 
-          className="h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-          loading="lazy"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = "/images/placeholder-product.jpg";
-          }}
+        <ProductImage
+          src={product.imageUrl}
+          alt={product.flavor}
+          flavor={product.flavor}
+          strength={product.strength}
+          size="medium"
+          aspectRatio="1:1"
+          objectFit="contain"
+          className="h-full w-auto transition-transform duration-300 group-hover:scale-105"
         />
-        
+
         {/* Quick view overlay on hover */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/5 opacity-0 transition-opacity group-hover:opacity-100">
           <span className="rounded-md bg-white/90 px-3 py-1.5 text-sm font-medium text-surface-900 shadow-sm">
@@ -103,11 +105,11 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           <div className="mb-1 flex items-center">
             <div className="flex text-warning-400">
               {[...Array(5)].map((_, i) => (
-                <Star 
-                  key={i} 
-                  size={14} 
-                  fill={i < (product.rating || 5) ? "currentColor" : "none"} 
-                  className={i < (product.rating || 5) ? "text-warning-400" : "text-surface-300"} 
+                <Star
+                  key={i}
+                  size={14}
+                  fill={i < (product.rating || 5) ? "currentColor" : "none"}
+                  className={i < (product.rating || 5) ? "text-warning-400" : "text-surface-300"}
                 />
               ))}
             </div>
@@ -120,12 +122,12 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
               {product.itemPN || product.flavor}
             </h3>
           </Link>
-          
+
           {/* Product specs */}
           <div className="mb-2">
             <span className="text-xs text-surface-500">{product.flavor} • {product.strength}mg • {product.count || 20} count</span>
           </div>
-          
+
           {/* Product pricing - wholesale vs retail */}
           <div className="flex items-baseline gap-2">
             {isWholesale && product.wholesalePrice ? (
@@ -150,15 +152,15 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           onKeyDown={handleKeyDown}
           disabled={product.inventoryCount <= 0}
           className={`mt-4 flex w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-            product.inventoryCount <= 0 
-              ? 'bg-gray-300 cursor-not-allowed text-gray-500' 
+            product.inventoryCount <= 0
+              ? 'bg-gray-300 cursor-not-allowed text-gray-500'
               : isInCart
                 ? 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500'
                 : 'bg-primary-600 hover:bg-primary-700 text-white focus:ring-primary-500'
           }`}
           aria-label={
-            product.inventoryCount <= 0 
-              ? `${product.itemPN} is out of stock` 
+            product.inventoryCount <= 0
+              ? `${product.itemPN} is out of stock`
               : isInCart
                 ? `${product.itemPN} is in your cart`
                 : `Add ${product.itemPN} to cart`
@@ -166,8 +168,8 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           tabIndex={0}
         >
           <ShoppingCart size={16} className="mr-2" />
-          {product.inventoryCount <= 0 
-            ? 'Out of Stock' 
+          {product.inventoryCount <= 0
+            ? 'Out of Stock'
             : isInCart
               ? 'In Cart'
               : 'Add to Cart'}
@@ -195,22 +197,22 @@ const FilterSidebar = ({ isOpen, onClose, flavors, strengths, selectedFilters, o
     <>
       {/* Mobile overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-surface-950/30 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         ></div>
       )}
 
       {/* Sidebar */}
-      <aside 
+      <aside
         className={`fixed bottom-0 left-0 top-0 z-50 w-80 transform overflow-y-auto bg-white p-6 shadow-lg transition duration-300 lg:relative lg:z-0 lg:block lg:transform-none lg:shadow-none ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="mb-6 flex items-center justify-between lg:hidden">
           <h2 className="text-lg font-semibold">Filters</h2>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="rounded-full p-1 text-surface-500 hover:bg-surface-100 hover:text-surface-700"
             aria-label="Close filters"
             tabIndex={0}
@@ -223,11 +225,11 @@ const FilterSidebar = ({ isOpen, onClose, flavors, strengths, selectedFilters, o
         <div className="mb-6">
           <h3 className="mb-3 font-medium text-surface-900">Price Range</h3>
           <div className="flex items-center gap-2">
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
-              className="h-2 w-full appearance-none rounded-lg bg-surface-200" 
+            <input
+              type="range"
+              min="0"
+              max="100"
+              className="h-2 w-full appearance-none rounded-lg bg-surface-200"
               id="price-range"
             />
           </div>
@@ -295,12 +297,12 @@ const ProductListingPage: React.FC = () => {
   const category = searchParams.get('category');
   const searchQuery = searchParams.get('search');
   const sortParam = searchParams.get('sort');
-  
+
   // Get auth and cart functionality from hooks
   const { addToCart, isItemInCart } = useCart();
   const { filterProducts, products: allProducts } = useProducts();
   const { userProfile, isAdmin, isOwner } = useUserRoles();
-  
+
   // Check if user is admin or owner
   const isAdminUser = isAdmin || isOwner;
   const isWholesale = userProfile?.role === 'wholesale' || userProfile?.role === 'distributor';
@@ -309,10 +311,10 @@ const ProductListingPage: React.FC = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // State for filter sidebar on mobile
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
+
   // State for selected filters
   const [selectedFilters, setSelectedFilters] = useState<ProductFilters>({
     flavors: [],
@@ -328,12 +330,12 @@ const ProductListingPage: React.FC = () => {
   // Extract unique filter options from all products
   const flavors = [...new Set(allProducts.map(p => p.flavor))];
   const strengths = [...new Set(allProducts.map(p => p.strength))] as number[];
-  
+
   // Load filtered products with server-side filtering
   const loadFilteredProducts = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Map sort option to ProductFilters sortBy
       let sortBy: ProductFilters['sortBy'] = 'newest';
       switch (sortOption) {
@@ -351,7 +353,7 @@ const ProductListingPage: React.FC = () => {
           sortBy = 'best-selling';
           break;
       }
-      
+
       // Create filters object
       const filters: ProductFilters = {
         ...selectedFilters,
@@ -359,7 +361,7 @@ const ProductListingPage: React.FC = () => {
         category: category || undefined,
         searchQuery: searchQuery || undefined
       };
-      
+
       // Load filtered products
       const products = await filterProducts(filters);
       setFilteredProducts(products);
@@ -378,30 +380,30 @@ const ProductListingPage: React.FC = () => {
   useEffect(() => {
     // Skip initial render
     if (loading) return;
-    
+
     const params = new URLSearchParams(searchParams);
-    
+
     // Update category parameter
     if (selectedFilters.category) {
       params.set('category', selectedFilters.category);
     } else if (category) {
       params.delete('category');
     }
-    
+
     // Update search parameter
     if (selectedFilters.searchQuery) {
       params.set('search', selectedFilters.searchQuery);
     } else if (searchQuery) {
       params.delete('search');
     }
-    
+
     // Update sort parameter
     if (sortOption && sortOption !== 'best-selling') {
       params.set('sort', sortOption);
     } else {
       params.delete('sort');
     }
-    
+
     // Apply URL updates without full page reload
     setSearchParams(params, { replace: true });
   }, [selectedFilters, sortOption, setSearchParams, searchParams, category, searchQuery, loading]);
@@ -426,7 +428,7 @@ const ProductListingPage: React.FC = () => {
 
     setSelectedFilters(prev => {
       const currentFilters = [...(prev[filterType] || [])];
-      
+
       if (currentFilters.includes(value as never)) {
         return {
           ...prev,
@@ -451,7 +453,7 @@ const ProductListingPage: React.FC = () => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const searchValue = formData.get('search')?.toString() || '';
-    
+
     setSelectedFilters(prev => ({
       ...prev,
       searchQuery: searchValue || undefined
@@ -480,14 +482,14 @@ const ProductListingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-surface-50">
       {/* Hero Banner */}
-      <BannerImage 
+      <BannerImage
         alt="Premium Nicotine Pouches"
         height="large"
         overlayContent={
           <div className="max-w-2xl">
             <h1 className="mb-4 text-4xl font-bold tracking-tight text-white sm:text-5xl">Premium Nicotine Pouches</h1>
             <p className="text-lg text-white/80">Experience the highest quality tobacco-free nicotine pouches with our premium selection.</p>
-            
+
             {/* Search form */}
             <form onSubmit={handleSearch} className="mt-6 flex max-w-md">
               <input
@@ -516,30 +518,30 @@ const ProductListingPage: React.FC = () => {
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-surface-900">
-              {category 
-                ? `${category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ')}` 
+              {category
+                ? `${category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ')}`
                 : 'All Products'}
               {searchQuery && <span className="ml-2 text-lg font-normal">Search results for "{searchQuery}"</span>}
             </h2>
-            
+
             {/* User role indicator and wholesale info */}
             {isWholesale && (
               <div className="mt-1 rounded-md bg-green-50 px-2 py-1 text-sm text-green-700 inline-block">
                 <span className="font-medium">Wholesale Pricing Active</span> - You're seeing special wholesale prices
               </div>
             )}
-            
+
             {/* Admin controls */}
             {isAdminUser && (
               <div className="mt-2 flex items-center gap-2">
-                <Link 
-                  to="/admin/products" 
+                <Link
+                  to="/admin/products"
                   className="inline-flex items-center rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
                 >
                   Manage Products
                 </Link>
-                <Link 
-                  to="/admin/inventory" 
+                <Link
+                  to="/admin/inventory"
                   className="inline-flex items-center rounded-md border border-surface-300 bg-white px-3 py-1.5 text-sm font-medium text-surface-700 hover:bg-surface-50"
                 >
                   Inventory
@@ -547,7 +549,7 @@ const ProductListingPage: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           <div className="flex items-center gap-4">
             {/* Mobile filter button */}
             <button
@@ -583,7 +585,7 @@ const ProductListingPage: React.FC = () => {
         {/* Main content with filters and product grid */}
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* Filters - desktop view built into the left sidebar */}
-          <FilterSidebar 
+          <FilterSidebar
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
             flavors={flavors}
@@ -599,9 +601,9 @@ const ProductListingPage: React.FC = () => {
               <div className="mb-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-medium text-surface-700">Active Filters:</span>
-                  
+
                   {selectedFilters.flavors?.map(flavor => (
-                    <span 
+                    <span
                       key={flavor}
                       className="inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700"
                     >
@@ -615,9 +617,9 @@ const ProductListingPage: React.FC = () => {
                       </button>
                     </span>
                   ))}
-                  
+
                   {selectedFilters.strengths?.map(strength => (
-                    <span 
+                    <span
                       key={strength}
                       className="inline-flex items-center rounded-full bg-secondary-50 px-3 py-1 text-xs font-medium text-secondary-700"
                     >
@@ -631,7 +633,7 @@ const ProductListingPage: React.FC = () => {
                       </button>
                     </span>
                   ))}
-                  
+
                   {selectedFilters.searchQuery && (
                     <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
                       Search: {selectedFilters.searchQuery}
@@ -644,7 +646,7 @@ const ProductListingPage: React.FC = () => {
                       </button>
                     </span>
                   )}
-                  
+
                   <button
                     className="text-xs font-medium text-surface-500 hover:text-primary-600"
                     onClick={() => handleFilterChange('reset')}
@@ -676,7 +678,7 @@ const ProductListingPage: React.FC = () => {
                   <div className="ml-3 flex-grow">
                     <h3 className="text-sm font-medium text-red-800">{error}</h3>
                   </div>
-                  <button 
+                  <button
                     onClick={loadFilteredProducts}
                     className="rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-800 hover:bg-red-200"
                   >
@@ -700,7 +702,7 @@ const ProductListingPage: React.FC = () => {
                   <div key={product.id} className="relative">
                     {isAdminUser && (
                       <div className="absolute right-2 top-2 z-20 flex gap-1">
-                        <Link 
+                        <Link
                           to={`/admin/products/edit/${product.id}`}
                           className="rounded-md bg-white/90 p-1.5 text-surface-600 shadow-sm backdrop-blur-sm hover:bg-white hover:text-primary-600"
                           title="Edit product"
@@ -708,7 +710,7 @@ const ProductListingPage: React.FC = () => {
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                         </Link>
-                        <button 
+                        <button
                           className="rounded-md bg-white/90 p-1.5 text-surface-600 shadow-sm backdrop-blur-sm hover:bg-white hover:text-red-600"
                           title="Delete product"
                           aria-label={`Delete ${product.itemPN}`}
@@ -717,9 +719,9 @@ const ProductListingPage: React.FC = () => {
                         </button>
                       </div>
                     )}
-                    <ProductCard 
-                      product={product} 
-                      onAddToCart={handleAddToCart} 
+                    <ProductCard
+                      product={product}
+                      onAddToCart={handleAddToCart}
                       isWholesale={isWholesale}
                       isInCart={isItemInCart(product.id)}
                     />
@@ -741,7 +743,7 @@ const ProductListingPage: React.FC = () => {
                 </button>
               </div>
             ) : null}
-            
+
             {/* Pagination section - simplified but functional */}
             {!loading && !error && filteredProducts.length > 0 && (
               <div className="mt-8 flex items-center justify-center">

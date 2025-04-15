@@ -3,10 +3,10 @@ import { getProductImagePath } from '../../lib/imageUtils';
 
 /**
  * ProductImage Component
- * 
+ *
  * A component for displaying product images with optimized loading,
  * fallbacks, and proper sizing based on Refactoring UI principles.
- * 
+ *
  * Features:
  * - Lazy loading for performance
  * - Fallback handling for missing images
@@ -40,12 +40,12 @@ const ProductImage: React.FC<ProductImageProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  
+
   // Determine the image source - either provided directly or from flavor/strength
-  const determinedSrc = src || (flavor && strength 
-    ? getProductImagePath(flavor, strength, fallbackSrc)
+  const determinedSrc = src || (flavor && strength
+    ? getProductImagePath(flavor, strength, size, fallbackSrc)
     : fallbackSrc);
-    
+
   const [imageSrc, setImageSrc] = useState(determinedSrc);
 
   // Reset states when determined source changes
@@ -86,12 +86,12 @@ const ProductImage: React.FC<ProductImageProps> = ({
     <div className={`relative overflow-hidden ${aspectRatioClasses[aspectRatio]} ${className}`}>
       {/* Loading skeleton */}
       {loading && (
-        <div 
+        <div
           className="absolute inset-0 bg-surface-200 animate-pulse"
           aria-hidden="true"
         />
       )}
-      
+
       {/* Main image */}
       <img
         src={imageSrc}
@@ -107,7 +107,7 @@ const ProductImage: React.FC<ProductImageProps> = ({
         onLoad={handleLoad}
         onError={handleError}
       />
-      
+
       {/* Error overlay */}
       {error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-surface-100/60 p-2 text-center">
