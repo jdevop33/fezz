@@ -99,7 +99,6 @@
       "fields": [
         { "fieldPath": "approved", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "role", "order": "IN" },
         { "fieldPath": "companyName", "order": "ASCENDING" }
       ]
     },

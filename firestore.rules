@@ -5,46 +5,47 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return userDoc != null && userDoc.data != null ? userDoc.data : { role: 'user', approved: false };
     }
 
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         (getUserData().isAdmin == true || getUserData().role == 'admin');
     }
-    
+
     function isSystemOwner() {
       return isAuthenticated() && getUserData().isOwner == true;
     }
-    
+
     function isDistributor() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         getUserData().role == 'distributor' &&
         getUserData().approved == true;
     }
-    
+
     function isWholesale() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         getUserData().role == 'wholesale' &&
         getUserData().approved == true;
     }
-    
+
     function isResourceOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
+
     function hasRole(role) {
       return isAuthenticated() && getUserData().role == role && getUserData().approved == true;
     }
-    
+
     // Products collection
     match /products/{productId} {
       allow read: if true; // Anyone can read products
       allow create, update, delete: if isAdmin() || isSystemOwner(); // Only admins and owners can modify products
     }
-    
+
     // Users collection
     match /users/{userId} {
       allow read: if isResourceOwner(userId) || isAdmin() || isSystemOwner();
@@ -52,7 +53,7 @@ service cloud.firestore {
       allow update: if isResourceOwner(userId) || isAdmin() || isSystemOwner();
       allow delete: if isAdmin() || isSystemOwner();
     }
-    
+
     // Orders collection
     match /orders/{orderId} {
       allow read: if isAuthenticated() && (
@@ -61,39 +62,39 @@ service cloud.firestore {
         (isDistributor() && resource.data.distributorId == request.auth.uid) || // Distributor assigned to the order
         (isWholesale() && resource.data.wholesalerId == request.auth.uid) // Wholesale buyer who referred the order
       );
-      
+
       allow create: if isAuthenticated(); // Any authenticated user can create an order
-      
-      allow update: if isAdmin() || isSystemOwner() || 
+
+      allow update: if isAdmin() || isSystemOwner() ||
         (isDistributor() && resource.data.distributorId == request.auth.uid) || // Distributor can update their assigned orders
         (isResourceOwner(resource.data.userId) && resource.data.status == "pending"); // Users can update their own pending orders
-      
+
       allow delete: if isAdmin() || isSystemOwner();
     }
-    
+
     // Transactions collection
     match /transactions/{transactionId} {
       allow read: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || // User's own transactions
         isAdmin() || isSystemOwner()
       );
-      
+
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow update: if isAdmin() || isSystemOwner();
       allow delete: if isAdmin() || isSystemOwner();
     }
-    
+
     // Commissions collection
     match /commissions/{commissionId} {
       allow read: if isAuthenticated() && (
         resource.data.userId == request.auth.uid || // User's own commissions
         isAdmin() || isSystemOwner()
       );
-      
+
       allow create, update: if isAdmin() || isSystemOwner();
       allow delete: if isAdmin() || isSystemOwner();
     }
-    
+
     // Settings collection (for user roles, system config, etc.)
     match /settings/{settingId} {
       allow read: if true; // Anyone can read settings

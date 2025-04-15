@@ -1,5 +1,8 @@
 {
   "projects": {
     "default": "fezz-452821"
+  },
+  "database": {
+    "default": "fezzdb"
   }
 }

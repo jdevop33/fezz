@@ -9,28 +9,31 @@ service firebase.storage {
 
     // Helper functions
     function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return userDoc != null && userDoc.data != null ? userDoc.data : { role: 'user', approved: false };
     }
 
     function isAdmin() {
-      return request.auth != null && 
+      return request.auth != null &&
         (getUserData().isAdmin == true || getUserData().role == 'admin');
     }
-    
+
     function isSystemOwner() {
       return request.auth != null && getUserData().isOwner == true;
     }
-    
+
     function isResourceOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
-    
+
     function getOrderUserId(orderId) {
-      return get(/databases/$(database)/documents/orders/$(orderId)).data.userId;
+      let orderDoc = get(/databases/$(database)/documents/orders/$(orderId));
+      return orderDoc != null && orderDoc.data != null ? orderDoc.data.userId : null;
     }
 
     function getOrderDistributorId(orderId) {
-      return get(/databases/$(database)/documents/orders/$(orderId)).data.distributorId;
+      let orderDoc = get(/databases/$(database)/documents/orders/$(orderId));
+      return orderDoc != null && orderDoc.data != null ? orderDoc.data.distributorId : null;
     }
 
     // User profile images
@@ -51,15 +54,15 @@ service firebase.storage {
     // Order attachments
     match /orders/{orderId}/{fileName} {
       // Order owner, assigned distributor, admin, or owner can read
-      allow read: if isResourceOwner(getOrderUserId(orderId)) || 
-                   request.auth.uid == getOrderDistributorId(orderId) || 
-                   isAdmin() || isSystemOwner();
-      
+      allow read: if isAdmin() || isSystemOwner() ||
+                   (getOrderUserId(orderId) != null && isResourceOwner(getOrderUserId(orderId))) ||
+                   (getOrderDistributorId(orderId) != null && request.auth.uid == getOrderDistributorId(orderId));
+
       // Only distributor assigned to order, admin, or owner can upload/modify
-      allow write: if request.auth.uid == getOrderDistributorId(orderId) || 
-                    isAdmin() || isSystemOwner();
+      allow write: if isAdmin() || isSystemOwner() ||
+                    (getOrderDistributorId(orderId) != null && request.auth.uid == getOrderDistributorId(orderId));
     }
-    
+
     // Catalog images - for all product images
     match /catalog/{fileName} {
       allow read: if true;
