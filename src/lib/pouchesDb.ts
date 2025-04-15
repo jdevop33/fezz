@@ -1,27 +1,27 @@
-import { 
-  where, 
-  orderBy,  
+import {
+  where,
+  orderBy,
   QueryConstraint
 } from 'firebase/firestore';
-import { 
-  createDocument, 
-  setDocument, 
-  updateDocument, 
-  getDocument, 
+import {
+  createDocument,
+  setDocument,
+  updateDocument,
+  getDocument,
   deleteDocument,
   queryDocuments,
   listenToDocument,
   listenToQuery
 } from './firestore';
 // Import types from the central types file
-import type { 
-  Product, 
-  User, 
-  Order, 
-  OrderItem, 
-  Address, 
-  Transaction, 
-  Commission 
+import type {
+  Product,
+  User,
+  Order,
+  OrderItem,
+  Address,
+  Transaction,
+  Commission
 } from './types';
 
 // Re-export these functions so they can be used by other modules
@@ -30,18 +30,21 @@ export {
   listenToDocument,
   listenToQuery,
   queryDocuments,
-  createDocument
+  createDocument,
+  updateDocument,
+  deleteDocument,
+  getDocument
 };
 
 // Re-export types
-export type { 
-  Product, 
-  User, 
-  Order, 
-  OrderItem, 
-  Address, 
-  Transaction, 
-  Commission 
+export type {
+  Product,
+  User,
+  Order,
+  OrderItem,
+  Address,
+  Transaction,
+  Commission
 };
 
 // Collection Names
@@ -74,14 +77,14 @@ export const deleteProduct = async (productId: string): Promise<void> => {
 
 export const getAllProducts = async (activeOnly = true): Promise<Product[]> => {
   const constraints: QueryConstraint[] = [];
-  
+
   if (activeOnly) {
     constraints.push(where('active', '==', true));
   }
-  
+
   constraints.push(orderBy('flavor', 'asc'));
   constraints.push(orderBy('strength', 'asc'));
-  
+
   return queryDocuments<Product>(COLLECTIONS.PRODUCTS, constraints);
 };
 
@@ -89,14 +92,14 @@ export const getProductsByCategory = async (category: string, activeOnly = true)
   const constraints: QueryConstraint[] = [
     where('category', '==', category)
   ];
-  
+
   if (activeOnly) {
     constraints.push(where('active', '==', true));
   }
-  
+
   constraints.push(orderBy('flavor', 'asc'));
   constraints.push(orderBy('strength', 'asc'));
-  
+
   return queryDocuments<Product>(COLLECTIONS.PRODUCTS, constraints);
 };
 
@@ -104,13 +107,13 @@ export const getProductsByFlavor = async (flavor: string, activeOnly = true): Pr
   const constraints: QueryConstraint[] = [
     where('flavor', '==', flavor)
   ];
-  
+
   if (activeOnly) {
     constraints.push(where('active', '==', true));
   }
-  
+
   constraints.push(orderBy('strength', 'asc'));
-  
+
   return queryDocuments<Product>(COLLECTIONS.PRODUCTS, constraints);
 };
 
@@ -131,7 +134,7 @@ export const updateUser = async (userId: string, data: Partial<User>): Promise<v
 };
 
 export const approveUserAccount = async (userId: string, approved: boolean): Promise<void> => {
-  return updateDocument(COLLECTIONS.USERS, userId, { 
+  return updateDocument(COLLECTIONS.USERS, userId, {
     approved,
     status: approved ? 'active' : 'rejected'
   });
@@ -249,19 +252,19 @@ export async function initializeProductsDatabase(products: Omit<Product, 'id' | 
     // Process in smaller batches to avoid connection timeout
     const batchSize = 3;
     const batches = [];
-    
+
     // Split into batches
     for (let i = 0; i < products.length; i += batchSize) {
       batches.push(products.slice(i, i + batchSize));
     }
-    
+
     console.log(`Initializing products in ${batches.length} batches of ${batchSize} each`);
-    
+
     // Process batches sequentially
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i];
       console.log(`Processing batch ${i+1}/${batches.length} with ${batch.length} products`);
-      
+
       // Create promises for each product in the batch
       const promises = batch.map(product => {
         // Use a custom ID based on flavor and strength to avoid duplicates
@@ -271,16 +274,16 @@ export async function initializeProductsDatabase(products: Omit<Product, 'id' | 
           id: customId
         }, true); // Use merge:true to avoid overwriting existing products
       });
-      
+
       // Wait for all products in this batch to be created
       await Promise.all(promises);
-      
+
       // Add a small delay between batches
       if (i < batches.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
-    
+
     console.log('Products database initialized successfully!');
   } catch (error) {
     console.error('Error initializing products database:', error);
@@ -291,7 +294,7 @@ export async function initializeProductsDatabase(products: Omit<Product, 'id' | 
 export async function initializeUserRoles(): Promise<void> {
   try {
     console.log('Initializing user roles...');
-    
+
     const userRoles = {
       retail: {
         name: 'Retail Customer',
@@ -314,22 +317,22 @@ export async function initializeUserRoles(): Promise<void> {
         permissions: ['manage_users', 'manage_products', 'verify_payments', 'assign_orders', 'manage_commissions', 'manage_admins', 'view_all_financials', 'approve_accounts']
       }
     };
-    
+
     // Process one role at a time with a delay between each
     const roles = Object.entries(userRoles);
-    
+
     for (let i = 0; i < roles.length; i++) {
       const [role, data] = roles[i];
       console.log(`Setting up role: ${role}`);
-      
+
       await setDocument(COLLECTIONS.SETTINGS, `role_${role}`, data, true); // Use merge: true
-      
+
       // Add a small delay between roles
       if (i < roles.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
-    
+
     console.log('User roles initialized successfully!');
   } catch (error) {
     console.error('Error initializing user roles:', error);
