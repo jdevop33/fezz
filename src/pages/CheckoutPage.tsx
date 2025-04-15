@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, CreditCard, ShoppingBag, Shield, Truck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CreditCard, ShoppingBag, Shield, Truck, BanknoteIcon } from 'lucide-react';
 import { useCart } from '../lib/hooks';
 import { useAuth } from '../lib/hooks';
 import { toast } from 'sonner';
+import { createOrder, Order, Address } from '../lib/pouchesDb';
+import { sendOrderConfirmationEmail, sendOrderNotificationToOwner, generatePaymentInstructions } from '../lib/emailUtils';
 
 interface ShippingFormData {
   firstName: string;
@@ -28,11 +30,12 @@ const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { items, subtotal, clearCart, isEmpty } = useCart();
-  
+
   const [step, setStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [shippingMethod, setShippingMethod] = useState<'standard' | 'express'>('standard');
-  const [paymentMethod, setPaymentMethod] = useState<'credit' | 'paypal'>('credit');
-  
+  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'check' | 'other'>('bank_transfer');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Shipping and payment form data
   const [shippingData, setShippingData] = useState<ShippingFormData>({
     firstName: currentUser?.displayName?.split(' ')[0] || '',
@@ -44,7 +47,7 @@ const CheckoutPage: React.FC = () => {
     phone: '',
     email: currentUser?.email || ''
   });
-  
+
   const [paymentData, setPaymentData] = useState<PaymentFormData>({
     cardName: '',
     cardNumber: '',
@@ -59,7 +62,7 @@ const CheckoutPage: React.FC = () => {
 
   // Age verification is required for nicotine products
   const [isAgeVerified, setIsAgeVerified] = useState(false);
-  
+
   if (isEmpty) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
@@ -77,10 +80,10 @@ const CheckoutPage: React.FC = () => {
       </div>
     );
   }
-  
+
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Basic form validation
     for (const [key, value] of Object.entries(shippingData)) {
       if (key !== 'apartment' && !value.trim()) {
@@ -88,89 +91,135 @@ const CheckoutPage: React.FC = () => {
         return;
       }
     }
-    
+
     // Age verification is required
     if (!isAgeVerified) {
       toast.error('You must verify that you are 21 or older to purchase these products');
       return;
     }
-    
+
     setStep('payment');
     window.scrollTo(0, 0);
   };
-  
+
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (paymentMethod === 'credit') {
-      // Basic credit card validation
-      for (const [key, value] of Object.entries(paymentData)) {
-        if (!value.trim()) {
-          toast.error(`Please fill out your ${key.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
-          return;
-        }
-      }
-      
-      // Validate card number format (basic check)
-      if (!/^\d{16}$/.test(paymentData.cardNumber.replace(/\s/g, ''))) {
-        toast.error('Please enter a valid card number');
-        return;
-      }
-      
-      // Validate expiry date (MM/YY format)
-      if (!/^\d{2}\/\d{2}$/.test(paymentData.expiryDate)) {
-        toast.error('Please enter expiry date in MM/YY format');
-        return;
-      }
-      
-      // Validate CVV (3-4 digits)
-      if (!/^\d{3,4}$/.test(paymentData.cvv)) {
-        toast.error('Please enter a valid CVV code');
-        return;
-      }
-    }
-    
+
+    // No validation needed for manual payment methods
     setStep('review');
     window.scrollTo(0, 0);
   };
-  
-  const handleOrderSubmit = () => {
-    // This would normally send the order to the backend
-    toast.success('Your order has been placed! Check your email for confirmation.');
-    
-    // Clear the cart
-    clearCart();
-    
-    // Redirect to order confirmation
-    setTimeout(() => {
-      navigate('/dashboard/orders', { state: { orderPlaced: true } });
-    }, 1500);
+
+  const handleOrderSubmit = async () => {
+    if (isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+
+      // Create shipping address object from form data
+      const shippingAddress: Address = {
+        name: `${shippingData.firstName} ${shippingData.lastName}`,
+        street: shippingData.address,
+        city: shippingData.city,
+        state: shippingData.state,
+        postalCode: shippingData.zipCode,
+        country: 'US', // Default to US for now
+        phone: shippingData.phone
+      };
+
+      // Convert cart items to order items
+      const orderItems = items.map(item => ({
+        productId: item.productId,
+        productName: item.product.itemPN || `${item.product.flavor} ${item.product.strength}mg`,
+        quantity: item.quantity,
+        unitPrice: item.product.price,
+        totalPrice: item.product.price * item.quantity
+      }));
+
+      // Generate payment instructions based on selected method
+      const instructions = generatePaymentInstructions({
+        id: 'temp-id', // Will be replaced with actual order ID
+        paymentMethod
+      } as Order);
+
+      // Create order object
+      const orderData = {
+        userId: currentUser?.uid || '',
+        userEmail: shippingData.email,
+        items: orderItems,
+        subtotal,
+        tax: taxAmount,
+        shipping: shippingCost,
+        total,
+        status: 'awaiting_payment',
+        paymentMethod,
+        paymentInstructions: instructions,
+        shippingAddress,
+        emailSent: false
+      };
+
+      // Create order in Firestore
+      const orderId = await createOrder(orderData);
+
+      // Send confirmation email to customer
+      const emailSent = await sendOrderConfirmationEmail({
+        ...orderData,
+        id: orderId
+      } as Order);
+
+      // Send notification to owner/admin
+      await sendOrderNotificationToOwner({
+        ...orderData,
+        id: orderId
+      } as Order);
+
+      // Update order with email status
+      if (emailSent) {
+        // In a real implementation, we would update the order document
+        console.log(`Email sent successfully for order ${orderId}`);
+      }
+
+      toast.success('Your order has been placed! Check your email for payment instructions.');
+
+      // Clear the cart
+      clearCart();
+
+      // Redirect to order confirmation
+      setTimeout(() => {
+        navigate('/dashboard/orders', { state: { orderPlaced: true } });
+      }, 1500);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error('There was a problem placing your order. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-  
+
   // Format card number with spaces for readability
   const formatCardNumber = (input: string) => {
     const cleaned = input.replace(/\D/g, '');
     const formatted = cleaned.replace(/(\d{4})(?=\d)/g, '$1 ');
     return formatted.substring(0, 19); // Limit to 16 digits + 3 spaces
   };
-  
+
   // Format expiry date with slash
   const formatExpiryDate = (input: string) => {
     const cleaned = input.replace(/\D/g, '');
-    
+
     if (cleaned.length > 2) {
       return `${cleaned.substring(0, 2)}/${cleaned.substring(2, 4)}`;
     }
-    
+
     return cleaned;
   };
-  
+
   return (
     <div className="bg-surface-50 py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center mb-8">
           <h1 className="text-2xl font-bold text-surface-900 text-center">Checkout</h1>
-          
+
           {/* Checkout steps */}
           <div className="mt-4 flex items-center justify-center">
             <span className={`flex h-8 w-8 items-center justify-center rounded-full ${step === 'shipping' || step === 'payment' || step === 'review' ? 'bg-primary-600 text-white' : 'bg-surface-200 text-surface-700'}`}>
@@ -199,7 +248,7 @@ const CheckoutPage: React.FC = () => {
             </span>
           </div>
         </div>
-        
+
         <div className="lg:grid lg:grid-cols-12 lg:gap-8">
           {/* Checkout forms */}
           <div className="lg:col-span-7">
@@ -207,7 +256,7 @@ const CheckoutPage: React.FC = () => {
             {step === 'shipping' && (
               <div className="rounded-lg border border-surface-200 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-medium text-surface-900 mb-4">Shipping Information</h2>
-                
+
                 <form onSubmit={handleShippingSubmit}>
                   <div className="mb-6 grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                     <div>
@@ -224,7 +273,7 @@ const CheckoutPage: React.FC = () => {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <label htmlFor="lastName" className="block text-sm font-medium text-surface-700">
                         Last Name
@@ -239,7 +288,7 @@ const CheckoutPage: React.FC = () => {
                         required
                       />
                     </div>
-                    
+
                     <div className="sm:col-span-2">
                       <label htmlFor="address" className="block text-sm font-medium text-surface-700">
                         Street Address
@@ -254,7 +303,7 @@ const CheckoutPage: React.FC = () => {
                         required
                       />
                     </div>
-                    
+
                     <div className="sm:col-span-2">
                       <label htmlFor="apartment" className="block text-sm font-medium text-surface-700">
                         Apartment, suite, etc. (optional)
@@ -268,7 +317,7 @@ const CheckoutPage: React.FC = () => {
                         className="mt-1 block w-full rounded-md border-surface-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                       />
                     </div>
-                    
+
                     <div>
                       <label htmlFor="city" className="block text-sm font-medium text-surface-700">
                         City
@@ -283,7 +332,7 @@ const CheckoutPage: React.FC = () => {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <label htmlFor="state" className="block text-sm font-medium text-surface-700">
                         State / Province
@@ -298,7 +347,7 @@ const CheckoutPage: React.FC = () => {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <label htmlFor="zipCode" className="block text-sm font-medium text-surface-700">
                         ZIP / Postal Code
@@ -313,7 +362,7 @@ const CheckoutPage: React.FC = () => {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <label htmlFor="phone" className="block text-sm font-medium text-surface-700">
                         Phone Number
@@ -328,7 +377,7 @@ const CheckoutPage: React.FC = () => {
                         required
                       />
                     </div>
-                    
+
                     <div className="sm:col-span-2">
                       <label htmlFor="email" className="block text-sm font-medium text-surface-700">
                         Email Address
@@ -344,10 +393,10 @@ const CheckoutPage: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="mt-6 mb-4">
                     <h3 className="text-base font-medium text-surface-900 mb-3">Shipping Method</h3>
-                    
+
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div
                         className={`relative rounded-lg border p-4 ${
@@ -373,7 +422,7 @@ const CheckoutPage: React.FC = () => {
                           </div>
                         </label>
                       </div>
-                      
+
                       <div
                         className={`relative rounded-lg border p-4 ${
                           shippingMethod === 'express'
@@ -400,7 +449,7 @@ const CheckoutPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Age verification */}
                   <div className="mt-6 mb-2 rounded-md bg-amber-50 p-4">
                     <div className="flex">
@@ -433,7 +482,7 @@ const CheckoutPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-6 flex justify-between">
                     <Link
                       to="/cart"
@@ -442,7 +491,7 @@ const CheckoutPage: React.FC = () => {
                       <ChevronLeft size={16} className="mr-1" />
                       Back to Cart
                     </Link>
-                    
+
                     <button
                       type="submit"
                       className="flex items-center rounded-md border border-transparent bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
@@ -454,154 +503,125 @@ const CheckoutPage: React.FC = () => {
                 </form>
               </div>
             )}
-            
+
             {/* Payment form */}
             {step === 'payment' && (
               <div className="rounded-lg border border-surface-200 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-medium text-surface-900 mb-4">Payment Method</h2>
-                
+
                 <form onSubmit={handlePaymentSubmit}>
                   <div className="mb-6">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                       <div
                         className={`relative rounded-lg border p-4 ${
-                          paymentMethod === 'credit'
+                          paymentMethod === 'bank_transfer'
                             ? 'border-primary-600 bg-primary-50'
                             : 'border-surface-200'
                         }`}
                       >
-                        <label htmlFor="payment-credit" className="flex cursor-pointer items-start text-sm">
+                        <label htmlFor="payment-bank" className="flex cursor-pointer items-start text-sm">
                           <input
                             type="radio"
-                            id="payment-credit"
+                            id="payment-bank"
                             name="payment-method"
                             className="h-4 w-4 text-primary-600 focus:ring-primary-500 mt-1"
-                            checked={paymentMethod === 'credit'}
-                            onChange={() => setPaymentMethod('credit')}
+                            checked={paymentMethod === 'bank_transfer'}
+                            onChange={() => setPaymentMethod('bank_transfer')}
                           />
                           <div className="ml-3 flex flex-col">
-                            <span className="block font-medium text-surface-900">Credit / Debit Card</span>
+                            <span className="block font-medium text-surface-900">Bank Transfer</span>
                             <span className="block text-surface-500">
-                              Pay with Visa, Mastercard, etc.
+                              Pay via bank transfer
                             </span>
                           </div>
                         </label>
                       </div>
-                      
+
                       <div
                         className={`relative rounded-lg border p-4 ${
-                          paymentMethod === 'paypal'
+                          paymentMethod === 'check'
                             ? 'border-primary-600 bg-primary-50'
                             : 'border-surface-200'
                         }`}
                       >
-                        <label htmlFor="payment-paypal" className="flex cursor-pointer items-start text-sm">
+                        <label htmlFor="payment-check" className="flex cursor-pointer items-start text-sm">
                           <input
                             type="radio"
-                            id="payment-paypal"
+                            id="payment-check"
                             name="payment-method"
                             className="h-4 w-4 text-primary-600 focus:ring-primary-500 mt-1"
-                            checked={paymentMethod === 'paypal'}
-                            onChange={() => setPaymentMethod('paypal')}
+                            checked={paymentMethod === 'check'}
+                            onChange={() => setPaymentMethod('check')}
                           />
                           <div className="ml-3 flex flex-col">
-                            <span className="block font-medium text-surface-900">PayPal</span>
+                            <span className="block font-medium text-surface-900">Check</span>
                             <span className="block text-surface-500">
-                              Pay with your PayPal account
+                              Pay by check
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+
+                      <div
+                        className={`relative rounded-lg border p-4 ${
+                          paymentMethod === 'other'
+                            ? 'border-primary-600 bg-primary-50'
+                            : 'border-surface-200'
+                        }`}
+                      >
+                        <label htmlFor="payment-other" className="flex cursor-pointer items-start text-sm">
+                          <input
+                            type="radio"
+                            id="payment-other"
+                            name="payment-method"
+                            className="h-4 w-4 text-primary-600 focus:ring-primary-500 mt-1"
+                            checked={paymentMethod === 'other'}
+                            onChange={() => setPaymentMethod('other')}
+                          />
+                          <div className="ml-3 flex flex-col">
+                            <span className="block font-medium text-surface-900">Other</span>
+                            <span className="block text-surface-500">
+                              Contact for options
                             </span>
                           </div>
                         </label>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Credit card form */}
-                  {paymentMethod === 'credit' && (
-                    <div className="mb-6 grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-4">
-                      <div className="sm:col-span-4">
-                        <label htmlFor="cardName" className="block text-sm font-medium text-surface-700">
-                          Name on Card
-                        </label>
-                        <input
-                          type="text"
-                          id="cardName"
-                          name="cardName"
-                          value={paymentData.cardName}
-                          onChange={(e) => setPaymentData({...paymentData, cardName: e.target.value})}
-                          className="mt-1 block w-full rounded-md border-surface-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          required
-                        />
+
+                  {/* Payment information message */}
+                  <div className="mb-6 rounded-md bg-blue-50 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <BanknoteIcon className="h-5 w-5 text-blue-400" aria-hidden="true" />
                       </div>
-                      
-                      <div className="sm:col-span-4 relative">
-                        <label htmlFor="cardNumber" className="block text-sm font-medium text-surface-700">
-                          Card Number
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            id="cardNumber"
-                            name="cardNumber"
-                            value={paymentData.cardNumber}
-                            onChange={(e) => setPaymentData({...paymentData, cardNumber: formatCardNumber(e.target.value)})}
-                            placeholder="0000 0000 0000 0000"
-                            className="mt-1 block w-full rounded-md border-surface-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                            required
-                          />
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pt-1">
-                            <CreditCard size={20} className="text-surface-400" />
-                          </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-blue-800">Payment Information</h3>
+                        <div className="mt-2 text-sm text-blue-700">
+                          <p>
+                            After placing your order, you will receive detailed payment instructions via email.
+                            Your order will be processed once payment is confirmed.
+                          </p>
+                          {paymentMethod === 'bank_transfer' && (
+                            <p className="mt-2">
+                              For bank transfers, please include your order number in the payment reference.
+                            </p>
+                          )}
+                          {paymentMethod === 'check' && (
+                            <p className="mt-2">
+                              For check payments, please include your order number in the memo line.
+                            </p>
+                          )}
+                          {paymentMethod === 'other' && (
+                            <p className="mt-2">
+                              For other payment methods, we will contact you with available options.
+                            </p>
+                          )}
                         </div>
                       </div>
-                      
-                      <div className="sm:col-span-2">
-                        <label htmlFor="expiryDate" className="block text-sm font-medium text-surface-700">
-                          Expiry Date (MM/YY)
-                        </label>
-                        <input
-                          type="text"
-                          id="expiryDate"
-                          name="expiryDate"
-                          value={paymentData.expiryDate}
-                          onChange={(e) => setPaymentData({...paymentData, expiryDate: formatExpiryDate(e.target.value)})}
-                          placeholder="MM/YY"
-                          maxLength={5}
-                          className="mt-1 block w-full rounded-md border-surface-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          required
-                        />
-                      </div>
-                      
-                      <div className="sm:col-span-2">
-                        <label htmlFor="cvv" className="block text-sm font-medium text-surface-700">
-                          CVV
-                        </label>
-                        <input
-                          type="text"
-                          id="cvv"
-                          name="cvv"
-                          value={paymentData.cvv}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '');
-                            setPaymentData({...paymentData, cvv: value.substring(0, 4)});
-                          }}
-                          placeholder="123"
-                          maxLength={4}
-                          className="mt-1 block w-full rounded-md border-surface-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                          required
-                        />
-                      </div>
                     </div>
-                  )}
-                  
-                  {/* PayPal form */}
-                  {paymentMethod === 'paypal' && (
-                    <div className="mb-6 rounded-md bg-blue-50 p-4 text-center">
-                      <p className="text-sm text-blue-700">
-                        You will be redirected to PayPal to complete your payment when you place your order.
-                      </p>
-                    </div>
-                  )}
-                  
+                  </div>
+
                   <div className="mt-6 flex justify-between">
                     <button
                       type="button"
@@ -614,7 +634,7 @@ const CheckoutPage: React.FC = () => {
                       <ChevronLeft size={16} className="mr-1" />
                       Back to Shipping
                     </button>
-                    
+
                     <button
                       type="submit"
                       className="flex items-center rounded-md border border-transparent bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
@@ -626,12 +646,12 @@ const CheckoutPage: React.FC = () => {
                 </form>
               </div>
             )}
-            
+
             {/* Order review */}
             {step === 'review' && (
               <div className="rounded-lg border border-surface-200 bg-white p-6 shadow-sm">
                 <h2 className="text-lg font-medium text-surface-900 mb-4">Review Your Order</h2>
-                
+
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-surface-900 mb-2">Shipping Address</h3>
                   <div className="rounded-md bg-surface-50 p-3 text-sm">
@@ -642,7 +662,7 @@ const CheckoutPage: React.FC = () => {
                     <p className="mt-1">{shippingData.email}</p>
                     <p>{shippingData.phone}</p>
                   </div>
-                  
+
                   <div className="mt-4 flex justify-between items-center">
                     <h3 className="text-sm font-medium text-surface-900">Shipping Method</h3>
                     <button
@@ -659,7 +679,7 @@ const CheckoutPage: React.FC = () => {
                   <p className="text-sm text-surface-600">
                     {shippingMethod === 'standard' ? 'Standard Shipping (3-5 business days)' : 'Express Shipping (1-2 business days)'}
                   </p>
-                  
+
                   <div className="mt-4 flex justify-between items-center">
                     <h3 className="text-sm font-medium text-surface-900">Payment Method</h3>
                     <button
@@ -674,12 +694,12 @@ const CheckoutPage: React.FC = () => {
                     </button>
                   </div>
                   <p className="text-sm text-surface-600">
-                    {paymentMethod === 'credit' 
-                      ? `Credit Card ending in ${paymentData.cardNumber.slice(-4)}` 
-                      : 'PayPal'}
+                    {paymentMethod === 'bank_transfer' && 'Bank Transfer'}
+                    {paymentMethod === 'check' && 'Check'}
+                    {paymentMethod === 'other' && 'Other Payment Method'}
                   </p>
                 </div>
-                
+
                 <h3 className="text-sm font-medium text-surface-900 mb-2">Order Items</h3>
                 <ul className="divide-y divide-surface-200 mb-6">
                   {items.map((item) => (
@@ -706,15 +726,16 @@ const CheckoutPage: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-                
+
                 <button
                   type="button"
                   onClick={handleOrderSubmit}
-                  className="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  disabled={isSubmitting}
+                  className="mt-6 flex w-full items-center justify-center rounded-md border border-transparent bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:bg-primary-400 disabled:cursor-not-allowed"
                 >
-                  Place Order
+                  {isSubmitting ? 'Processing...' : 'Place Order'}
                 </button>
-                
+
                 <div className="mt-4 flex justify-center">
                   <button
                     type="button"
@@ -731,12 +752,12 @@ const CheckoutPage: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           {/* Order summary */}
           <div className="mt-8 lg:col-span-5 lg:mt-0">
             <div className="rounded-lg border border-surface-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-medium text-surface-900 mb-4">Order Summary</h2>
-              
+
               <div className="flow-root">
                 <ul className="divide-y divide-surface-200">
                   {items.map((item) => (
@@ -764,7 +785,7 @@ const CheckoutPage: React.FC = () => {
                   ))}
                 </ul>
               </div>
-              
+
               <div className="mt-6 space-y-4 border-t border-surface-200 pt-4">
                 <div className="flex justify-between text-sm">
                   <p className="text-surface-600">Subtotal</p>
@@ -783,7 +804,7 @@ const CheckoutPage: React.FC = () => {
                   <p className="text-base font-medium text-surface-900">${total.toFixed(2)}</p>
                 </div>
               </div>
-              
+
               <div className="mt-6 space-y-4">
                 <div className="flex items-center">
                   <Shield className="h-5 w-5 text-surface-400" />

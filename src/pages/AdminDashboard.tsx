@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { Building2, Users, Package, Battery as Category, Settings, LogOut, Shield, UserCog, CircleDollarSign, BarChart } from 'lucide-react';
+import { Building2, Users, Package, Battery as Category, Settings, LogOut, Shield, UserCog, CircleDollarSign, BarChart, ShoppingBag } from 'lucide-react';
 import clsx from 'clsx';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { auth } from '../lib/firebase';
@@ -21,6 +21,7 @@ type NavigationItem = {
 const adminNavigation: NavigationItem[] = [
   { name: 'Products', href: '/admin/products', icon: Package },
   { name: 'Categories', href: '/admin/categories', icon: Category },
+  { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
   { name: 'Pending Approvals', href: '/admin/approvals', icon: Users },
 ];
 
@@ -60,7 +61,7 @@ function AdminDashboard() {
 
   // Combine navigation items based on user role
   const navigationItems = [...adminNavigation];
-  
+
   // Only add owner-specific navigation if user is an owner
   if (currentUser?.isOwner) {
     navigationItems.push(...ownerNavigation);
@@ -91,7 +92,7 @@ function AdminDashboard() {
                 </div>
                 <ThemeToggle />
               </div>
-              
+
               <div className="mt-5 flex-grow flex flex-col justify-between">
                 <nav className="flex-1 px-2 space-y-1">
                   {navigationItems.map((item) => {
@@ -99,8 +100,8 @@ function AdminDashboard() {
                     if (item.ownerOnly && !currentUser?.isOwner) {
                       return null;
                     }
-                    
-                    const isActive = location.pathname === item.href || 
+
+                    const isActive = location.pathname === item.href ||
                                     (item.href !== '/admin/approvals' && location.pathname.startsWith(item.href));
                     return (
                       <Link
@@ -115,8 +116,8 @@ function AdminDashboard() {
                       >
                         <item.icon
                           className={clsx(
-                            isActive 
-                              ? 'text-primary-600 dark:text-primary-400' 
+                            isActive
+                              ? 'text-primary-600 dark:text-primary-400'
                               : 'text-surface-400 dark:text-surface-500 group-hover:text-surface-500 dark:group-hover:text-surface-400',
                             'mr-3 flex-shrink-0 h-5 w-5'
                           )}
@@ -127,7 +128,7 @@ function AdminDashboard() {
                     );
                   })}
                 </nav>
-                
+
                 <div className="px-2 py-4 space-y-1 border-t border-surface-200 dark:border-surface-700 mt-4">
                   <Link
                     to="/settings"
@@ -159,7 +160,7 @@ function AdminDashboard() {
             </div>
             <ThemeToggle />
           </div>
-          
+
           <main className="flex-1 relative overflow-y-auto focus:outline-none">
             <div className="py-6 px-4 sm:px-6 lg:px-8">
               {/* Render nested route content */}

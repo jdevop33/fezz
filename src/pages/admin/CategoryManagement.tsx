@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { queryDocuments, createDocument, updateDocument, deleteDocument, COLLECTIONS } from '../../lib/pouchesDb';
 
 interface Category {
   id: string;
@@ -36,7 +36,7 @@ function CategoryManagement() {
         .order('name');
 
       if (error) throw error;
-      
+
       // Transform the data to include the product count
       const categoriesWithCount = (data || []).map(category => ({
         ...category,

@@ -20,7 +20,7 @@ export interface Product extends BaseDocument {
   category: string;
   imageUrl: string;
   active: boolean;
-  
+
   // UI & display fields
   rating?: number;
   reviewCount?: number;
@@ -84,18 +84,22 @@ export interface Address {
 // Order Interface
 export interface Order extends BaseDocument {
   userId: string;
+  userEmail: string; // Added for email notifications
   items: OrderItem[];
   subtotal: number;
   tax: number;
   shipping: number;
   total: number;
-  status: 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentMethod: 'crypto' | 'bank' | 'highRisk';
+  status: 'pending' | 'awaiting_payment' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  paymentMethod?: 'bank_transfer' | 'check' | 'other'; // Simplified payment methods
+  paymentInstructions?: string; // Instructions for manual payment
   paymentId?: string;
   shippingAddress: Address;
   distributorId?: string;
   wholesalerId?: string;
   trackingNumber?: string;
+  notes?: string; // For admin/owner notes about the order
+  emailSent?: boolean; // Track if confirmation email was sent
 }
 
 // Transaction Interface

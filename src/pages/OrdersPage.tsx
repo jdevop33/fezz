@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight, Package, Truck, CheckCircle, RefreshCw, ExternalLink, Search } from 'lucide-react';
+import { ChevronRight, Package, Truck, CheckCircle, RefreshCw, ExternalLink, Search, Clock } from 'lucide-react';
 import { useAuth } from '../lib/hooks';
 import { toast } from 'sonner';
 
 // Order status type
-type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled';
+type OrderStatus = 'pending' | 'awaiting_payment' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
 // Order interface
 interface OrderItem {
@@ -135,7 +135,7 @@ const OrdersPage: React.FC = () => {
       const query = searchQuery.toLowerCase();
       const matchesOrderId = order.id.toLowerCase().includes(query);
       const matchesTracking = order.trackingNumber?.toLowerCase().includes(query) || false;
-      const matchesProducts = order.items.some(item => 
+      const matchesProducts = order.items.some(item =>
         item.name.toLowerCase().includes(query)
       );
 
@@ -148,9 +148,9 @@ const OrdersPage: React.FC = () => {
   // Format date string to readable format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -160,16 +160,37 @@ const OrdersPage: React.FC = () => {
   // Get status badge style based on order status
   const getStatusBadge = (status: OrderStatus) => {
     switch (status) {
-      case 'processing':
+      case 'pending':
+        return (
+          <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+            <Clock size={12} className="mr-1" />
+            Pending
+          </span>
+        );
+      case 'awaiting_payment':
         return (
           <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+            <Clock size={12} className="mr-1" />
+            Awaiting Payment
+          </span>
+        );
+      case 'paid':
+        return (
+          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+            <CheckCircle size={12} className="mr-1" />
+            Paid
+          </span>
+        );
+      case 'processing':
+        return (
+          <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
             <RefreshCw size={12} className="mr-1" />
             Processing
           </span>
         );
       case 'shipped':
         return (
-          <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+          <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
             <Truck size={12} className="mr-1" />
             Shipped
           </span>
@@ -243,6 +264,8 @@ const OrdersPage: React.FC = () => {
               className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-surface-900 ring-1 ring-inset ring-surface-300 focus:ring-2 focus:ring-primary-600 sm:text-sm"
             >
               <option value="all">All orders</option>
+              <option value="awaiting_payment">Awaiting Payment</option>
+              <option value="paid">Paid</option>
               <option value="processing">Processing</option>
               <option value="shipped">Shipped</option>
               <option value="delivered">Delivered</option>
@@ -390,6 +413,14 @@ const OrdersPage: React.FC = () => {
                         <ExternalLink size={14} className="ml-1" />
                       </a>
                     </div>
+                  ) : order.status === 'awaiting_payment' ? (
+                    <p className="text-sm text-surface-600">
+                      Your order is awaiting payment. Please check your email for payment instructions.
+                    </p>
+                  ) : order.status === 'paid' ? (
+                    <p className="text-sm text-surface-600">
+                      Your payment has been received. Your order will be processed soon.
+                    </p>
                   ) : order.status === 'processing' ? (
                     <p className="text-sm text-surface-600">
                       Your order is being processed. Tracking information will be available once shipped.

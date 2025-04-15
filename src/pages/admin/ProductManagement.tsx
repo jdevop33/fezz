@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Package, Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { queryDocuments, createDocument, updateDocument, deleteDocument, COLLECTIONS } from '../../lib/pouchesDb';
 import ProductModal from '../../components/products/ProductModal';
 import DeleteConfirmationModal from '../../components/products/DeleteConfirmationModal';
 
@@ -42,16 +42,25 @@ function ProductManagement() {
 
   async function loadProducts() {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          category:categories(name)
-        `)
-        .order('name');
+      const productsData = await queryDocuments(COLLECTIONS.PRODUCTS, []);
 
-      if (error) throw error;
-      setProducts(data || []);
+      // Transform data to match the expected format
+      const transformedProducts = productsData.map(product => ({
+        id: product.id,
+        name: product.itemPN || `${product.flavor} ${product.strength}mg`,
+        description: product.description || '',
+        category_id: product.category || '',
+        price: product.price,
+        inventory_count: product.inventoryCount || 0,
+        sku: product.itemPN || '',
+        image_url: product.imageUrl || null,
+        is_active: product.active !== false, // Default to true if not specified
+        category: {
+          name: product.category || 'Uncategorized'
+        }
+      }));
+
+      setProducts(transformedProducts);
     } catch (error) {
       console.error('Error loading products:', error);
       toast.error('Failed to load products');
@@ -62,13 +71,22 @@ function ProductManagement() {
 
   async function loadCategories() {
     try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('id, name')
-        .order('name');
+      // For now, we'll use a simple approach to get categories
+      // In a real implementation, you would have a separate categories collection
+      const productsData = await queryDocuments(COLLECTIONS.PRODUCTS, []);
 
-      if (error) throw error;
-      setCategories(data || []);
+      // Extract unique categories
+      const uniqueCategories = new Map();
+      productsData.forEach(product => {
+        if (product.category) {
+          uniqueCategories.set(product.category, {
+            id: product.category,
+            name: product.category
+          });
+        }
+      });
+
+      setCategories(Array.from(uniqueCategories.values()));
     } catch (error) {
       console.error('Error loading categories:', error);
       toast.error('Failed to load categories');
@@ -79,20 +97,33 @@ function ProductManagement() {
     try {
       if (selectedProduct) {
         // Update existing product
-        const { error } = await supabase
-          .from('products')
-          .update(data)
-          .eq('id', selectedProduct.id);
+        await updateDocument(COLLECTIONS.PRODUCTS, selectedProduct.id, {
+          itemPN: data.name,
+          description: data.description,
+          category: data.category_id,
+          price: data.price,
+          inventoryCount: data.inventory_count,
+          imageUrl: data.image_url,
+          active: data.is_active
+        });
 
-        if (error) throw error;
         toast.success('Product updated successfully');
       } else {
         // Create new product
-        const { error } = await supabase
-          .from('products')
-          .insert([data]);
+        await createDocument(COLLECTIONS.PRODUCTS, {
+          itemPN: data.name,
+          description: data.description,
+          category: data.category_id,
+          price: data.price,
+          inventoryCount: data.inventory_count,
+          imageUrl: data.image_url,
+          active: data.is_active,
+          // Add required fields for our product model
+          flavor: data.name?.split(' ')[0] || 'Unknown',
+          strength: parseInt(data.name?.split(' ')[1] || '0'),
+          wholesalePrice: (data.price || 0) * 0.7 // 30% discount for wholesale
+        });
 
-        if (error) throw error;
         toast.success('Product created successfully');
       }
 
@@ -109,12 +140,7 @@ function ProductManagement() {
     if (!productToDelete) return;
 
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productToDelete.id);
-
-      if (error) throw error;
+      await deleteDocument(COLLECTIONS.PRODUCTS, productToDelete.id);
 
       toast.success('Product deleted successfully');
       setIsDeleteModalOpen(false);
@@ -128,12 +154,9 @@ function ProductManagement() {
 
   async function toggleProductStatus(productId: string, currentStatus: boolean) {
     try {
-      const { error } = await supabase
-        .from('products')
-        .update({ is_active: !currentStatus })
-        .eq('id', productId);
-
-      if (error) throw error;
+      await updateDocument(COLLECTIONS.PRODUCTS, productId, {
+        active: !currentStatus
+      });
 
       toast.success('Product status updated');
       loadProducts();
@@ -144,7 +167,7 @@ function ProductManagement() {
   }
 
   // Filter products based on search term
-  const filteredProducts = products.filter(product => 
+  const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -243,7 +266,7 @@ function ProductManagement() {
                       <p className="font-medium text-surface-900 dark:text-white text-base mb-1">No products found</p>
                       <p>Try adjusting your search or filters to find what you're looking for.</p>
                       {searchTerm && (
-                        <button 
+                        <button
                           onClick={() => setSearchTerm('')}
                           className="mt-4 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
                         >
@@ -331,7 +354,7 @@ function ProductManagement() {
             </tbody>
           </table>
         </div>
-        
+
         {/* Pagination */}
         <div className="flex items-center justify-between border-t border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 px-4 py-3 sm:px-6">
           <div className="flex flex-1 justify-between sm:hidden">

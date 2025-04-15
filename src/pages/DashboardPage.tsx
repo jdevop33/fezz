@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { Building2, Users, TrendingUp, DollarSign } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { queryDocuments, COLLECTIONS } from '../lib/pouchesDb';
 import Footer from '../components/Footer';
 
 interface Transaction {
@@ -32,7 +32,7 @@ function DashboardPage() {
     async function loadDashboardData() {
       try {
         const { data: profile } = await supabase.auth.getUser();
-        
+
         if (!profile.user) {
           throw new Error('Not authenticated');
         }
@@ -58,9 +58,9 @@ function DashboardPage() {
 
         setTransactions(transactionsData);
         setCommissions(commissionsData);
-        
+
         // Calculate total earnings
-        const total = commissionsData.reduce((sum: number, commission: Commission) => 
+        const total = commissionsData.reduce((sum: number, commission: Commission) =>
           sum + (commission.status === 'paid' ? commission.amount : 0), 0);
         setTotalEarnings(total);
       } catch (error) {

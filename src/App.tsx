@@ -19,7 +19,7 @@ const lazyWithSuspense = <T extends React.ComponentType<React.PropsWithChildren<
   importFn: () => Promise<{ default: T }>
 ) => {
   const LazyComponent = lazy(importFn);
-  
+
   // Use ComponentPropsWithRef to extract the proper prop types from the component
   return function WithSuspense(
     props: React.ComponentPropsWithRef<T>
@@ -40,6 +40,7 @@ const AdminDashboard = lazyWithSuspense(() => import('./pages/AdminDashboard'));
 const ProductManagement = lazyWithSuspense(() => import('./pages/admin/ProductManagement'));
 const CategoryManagement = lazyWithSuspense(() => import('./pages/admin/CategoryManagement'));
 const PendingApprovals = lazyWithSuspense(() => import('./pages/admin/PendingApprovals'));
+const OrdersAdminPage = lazyWithSuspense(() => import('./pages/admin/OrdersAdminPage'));
 const AdminManagement = lazyWithSuspense(() => import('./pages/admin/AdminManagement'));
 const UserRoleManagement = lazyWithSuspense(() => import('./pages/admin/UserRoleManagement'));
 const SystemSettings = lazyWithSuspense(() => import('./pages/admin/SystemSettings'));
@@ -156,7 +157,11 @@ const router = createBrowserRouter([
         path: "approvals",
         element: <PendingApprovals />
       },
-      
+      {
+        path: "orders",
+        element: <OrdersAdminPage />
+      },
+
       // Finance (Owner-only routes)
       {
         path: "payments",
@@ -166,7 +171,7 @@ const router = createBrowserRouter([
         path: "reports",
         element: <ProtectedRoute isOwner><ReportsPage /></ProtectedRoute>
       },
-      
+
       // Admin Management (Owner-only routes)
       {
         path: "admins",
@@ -197,23 +202,23 @@ function App() {
   useEffect(() => {
     // First set the app as ready to use to avoid blocking the UI
     setDbInitialized(true);
-    
+
     // We'll check for explicit initialization via URL parameter
     const shouldInitDb = new URLSearchParams(window.location.search).has('init-db');
-    
+
     // Also check local storage to see if we've initialized before
     const hasInitialized = localStorage.getItem('dbInitialized') === 'true';
-    
+
     // Improved initialization with more robust checks and fallbacks
     if (shouldInitDb || !hasInitialized) {
       console.log(`Database initialization ${shouldInitDb ? 'requested via URL parameter' : 'has not been done yet'}`);
       setInitError(null); // Clear any previous errors
-      
+
       // Initialize in a non-blocking way - app is already usable
       (async () => {
         try {
           console.log('Starting application initialization...');
-          
+
           // Use the initializeDatabase function from initDb.ts
           const initModule = await import('./lib/initDb');
           // Check if initializeApplication exists
@@ -223,9 +228,9 @@ function App() {
             // Fall back to initializeDatabase if the other function doesn't exist
             await initModule.initializeDatabase();
           }
-          
+
           console.log('Application initialization completed successfully!');
-          
+
           // Mark as initialized in local storage
           localStorage.setItem('dbInitialized', 'true');
         } catch (error) {
@@ -248,9 +253,9 @@ function App() {
       <AuthProvider>
         <CartProvider>
           <ProductProvider>
-            <Toaster 
-              position="top-right" 
-              closeButton 
+            <Toaster
+              position="top-right"
+              closeButton
               theme="system"
               className="toaster-wrapper"
               toastOptions={{
@@ -265,7 +270,7 @@ function App() {
             {initError && (
               <div className="fixed top-0 left-0 right-0 bg-red-500 text-white text-center p-2 z-50">
                 Database initialization error: {initError.message}
-                <button 
+                <button
                   onClick={() => setInitError(null)}
                   className="ml-2 px-2 py-0.5 bg-red-600 rounded hover:bg-red-700"
                 >
