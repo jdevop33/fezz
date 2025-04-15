@@ -17,7 +17,7 @@ A premium e-commerce platform for selling tobacco-free nicotine pouches to whole
 - **Frontend**: React, TypeScript, Tailwind CSS
 - **Backend**: Firebase (Authentication, Firestore, Storage, Functions)
 - **Build Tools**: Vite, ESLint
-- **Deployment**: Firebase Hosting
+- **Deployment**: Vercel (frontend), Firebase (backend services)
 
 ## Development Setup
 
@@ -72,7 +72,35 @@ npm run build
 
 The build artifacts will be stored in the `dist/` directory.
 
-## Deployment to Firebase
+## Deployment Options
+
+### Option 1: Deploy to Vercel (Recommended for Frontend)
+
+1. Install the Vercel CLI globally:
+```bash
+npm install -g vercel
+```
+
+2. Login to Vercel:
+```bash
+vercel login
+```
+
+3. Deploy to Vercel:
+```bash
+npm run deploy:vercel
+```
+
+4. For production deployment:
+```bash
+npm run deploy:vercel:prod
+```
+
+5. Set up environment variables in the Vercel dashboard:
+   - Go to your project settings in the Vercel dashboard
+   - Add all the Firebase environment variables from your `.env` file
+
+### Option 2: Deploy to Firebase
 
 1. Install the Firebase CLI globally:
 ```bash

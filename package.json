@@ -13,6 +13,8 @@
     "deploy": "bash scripts/deploy.sh",
     "deploy:hosting": "bash scripts/deploy.sh --hosting-only",
     "deploy:rules": "bash scripts/deploy.sh --rules-only",
+    "deploy:vercel": "vercel",
+    "deploy:vercel:prod": "vercel --prod",
     "emulators": "firebase emulators:start",
     "emulators:export": "firebase emulators:export ./emulator-data",
     "emulators:import": "firebase emulators:start --import=./emulator-data --export-on-exit",
