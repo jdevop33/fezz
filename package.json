@@ -34,6 +34,7 @@
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
     "@headlessui/react": "^1.7.18",
     "@supabase/supabase-js": "^2.39.7",
+    "@vercel/blob": "^1.0.0",
     "clsx": "^2.1.0",
     "csv-parse": "^5.6.0",
     "date-fns": "^3.3.1",

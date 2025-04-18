@@ -1,4 +1,5 @@
 import imageManifest from './imageManifest.json';
+import { isBlobUrl } from './blobStorage';
 
 /**
  * Get the correct image path for a product based on flavor and strength
